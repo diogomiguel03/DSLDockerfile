@@ -1,4 +1,4 @@
-package org.example.generator
+package org.example.Generator
 
 import org.example.DSL.InstructionsDockerfile
 import java.io.File
@@ -7,162 +7,128 @@ import java.util.*
 class GeneratorDockerfile(private val instructions: InstructionsDockerfile) {
     private val scanner = Scanner(System.`in`)
 
-    fun createDefaultDockerfile() {
-        instructions.apply {
-            from("ubuntu", "latest")
-            run("apt-get update")
-            run("apt-get install -y openjdk-11-jdk")
-            workdir("/app")
-            copy(".", "/app")
-            run("javac Main.java")
-            cmd("java Main")
-        }
-
-        val filePath = readInput("Enter file path for Dockerfile (leave blank for './Dockerfile'):", "./Dockerfile")
+    fun createDefaultDockerfile(image: String, tag: String, updateCommand: String, installCommand: String, workdirPath: String, copySource: String, copyDestination: String, compileCommand: String, cmdCommand: String, filePath: String) {
+        instructions.from(image, tag)
+        instructions.run(updateCommand)
+        instructions.run(installCommand)
+        instructions.workdir(workdirPath)
+        instructions.copy(copySource, copyDestination)
+        instructions.run(compileCommand)
+        instructions.cmd(cmdCommand)
         generate(filePath)
         println("Dockerfile created at $filePath")
     }
 
-    fun createCustomDockerfile() {
-        while (true) {
-            println("Select an instruction to add:")
-            println("1. FROM")
-            println("2. ADD")
-            println("3. ARG")
-            println("4. CMD")
-            println("5. ENTRYPOINT")
-            println("6. ENV")
-            println("7. EXPOSE")
-            println("8. HEALTHCHECK")
-            println("9. LABEL")
-            println("10. MAINTAINER")
-            println("11. RUN")
-            println("12. SHELL")
-            println("13. STOPSIGNAL")
-            println("14. USER")
-            println("15. VOLUME")
-            println("16. WORKDIR")
-            println("17. COPY")
-            println("18. Finish and create Dockerfile")
-
-            when (scanner.nextLine()) {
-                "1" -> addFrom()
-                "2" -> addAdd()
-                "3" -> addArg()
-                "4" -> addCmd()
-                "5" -> addEntrypoint()
-                "6" -> addEnv()
-                "7" -> addExpose()
-                "8" -> addHealthcheck()
-                "9" -> addLabel()
-                "10" -> addMaintainer()
-                "11" -> addRun()
-                "12" -> addShell()
-                "13" -> addStopsignal()
-                "14" -> addUser()
-                "15" -> addVolume()
-                "16" -> addWorkdir()
-                "17" -> addCopy()
-                "18" -> break
-                else -> println("Invalid option")
+    fun createCustomDockerfile(instruction: String, parameters: String, filePath: String) {
+        when (instruction) {
+            "FROM" -> {
+                val (image, tag) = parameters.split(" ")
+                instructions.from(image, tag)
+            }
+            "ADD" -> {
+                val (source, destination) = parameters.split(" ")
+                instructions.add(source, destination)
+            }
+            "ARG" -> {
+                val (name, defaultValue) = parameters.split(" ")
+                instructions.arg(name, defaultValue)
+            }
+            "CMD" -> instructions.cmd(parameters)
+            "ENTRYPOINT" -> instructions.entrypoint(parameters)
+            "ENV" -> {
+                val (key, value) = parameters.split(" ")
+                instructions.env(key, value)
+            }
+            "EXPOSE" -> instructions.expose(parameters.toInt())
+            "HEALTHCHECK" -> instructions.healthcheck(parameters)
+            "LABEL" -> {
+                val (key, value) = parameters.split(" ")
+                instructions.label(key, value)
+            }
+            "MAINTAINER" -> instructions.maintainer(parameters)
+            "RUN" -> instructions.run(parameters)
+            "SHELL" -> instructions.shell(parameters)
+            "STOPSIGNAL" -> instructions.stopsignal(parameters)
+            "USER" -> instructions.user(parameters)
+            "VOLUME" -> instructions.volume(parameters)
+            "WORKDIR" -> instructions.workdir(parameters)
+            "COPY" -> {
+                val (source, destination) = parameters.split(" ")
+                instructions.copy(source, destination)
             }
         }
-
-        val filePath = readInput("Enter file path for Dockerfile (leave blank for './Dockerfile'):", "./Dockerfile")
         generate(filePath)
-        println("Dockerfile created at $filePath")
     }
 
-    private fun addFrom() {
-        val image = readInput("Enter image for FROM instruction:")
-        val tag = readInput("Enter tag for FROM instruction (leave blank for 'latest'):", "latest")
+
+    private fun addFrom(image: String, tag: String = "latest") {
         instructions.from(image, tag)
     }
 
-    private fun addAdd() {
-        val source = readInput("Enter source for ADD instruction:")
-        val destination = readInput("Enter destination for ADD instruction:")
+    private fun addAdd(source: String, destination: String) {
         instructions.add(source, destination)
     }
 
-    private fun addArg() {
-        val name = readInput("Enter name for ARG instruction:")
-        val defaultValue = readInput("Enter default value for ARG instruction (leave blank if none):")
-        instructions.arg(name, if (defaultValue.isBlank()) null else defaultValue)
+    private fun addArg(name: String, defaultValue: String? = null) {
+        instructions.arg(name, defaultValue)
     }
 
-    private fun addCmd() {
-        val command = readInput("Enter command for CMD instruction:")
+    private fun addCmd(command: String) {
         instructions.cmd(command)
     }
 
-    private fun addEntrypoint() {
-        val command = readInput("Enter command for ENTRYPOINT instruction:")
+    private fun addEntrypoint(command: String) {
         instructions.entrypoint(command)
     }
 
-    private fun addEnv() {
-        val key = readInput("Enter key for ENV instruction:")
-        val value = readInput("Enter value for ENV instruction:")
+    private fun addEnv(key: String, value: String) {
         instructions.env(key, value)
     }
 
-    private fun addExpose() {
-        val port = readInput("Enter port for EXPOSE instruction:").toInt()
+    private fun addExpose(port: Int) {
         instructions.expose(port)
     }
 
-    private fun addHealthcheck() {
-        val command = readInput("Enter command for HEALTHCHECK instruction:")
+    private fun addHealthcheck(command: String) {
         instructions.healthcheck(command)
     }
 
-    private fun addLabel() {
-        val key = readInput("Enter key for LABEL instruction:")
-        val value = readInput("Enter value for LABEL instruction:")
+    private fun addLabel(key: String, value: String) {
         instructions.label(key, value)
     }
 
-    private fun addMaintainer() {
-        val name = readInput("Enter name for MAINTAINER instruction:")
+    private fun addMaintainer(name: String) {
         instructions.maintainer(name)
     }
 
-    private fun addRun() {
-        val command = readInput("Enter command for RUN instruction:")
+    private fun addRun(command: String) {
         instructions.run(command)
     }
 
-    private fun addShell() {
-        val command = readInput("Enter command for SHELL instruction:")
+    private fun addShell(command: String) {
         instructions.shell(command)
     }
 
-    private fun addStopsignal() {
-        val signal = readInput("Enter signal for STOPSIGNAL instruction:")
+    private fun addStopsignal(signal: String) {
         instructions.stopsignal(signal)
     }
 
-    private fun addUser() {
-        val user = readInput("Enter user for USER instruction:")
+    private fun addUser(user: String) {
         instructions.user(user)
     }
 
-    private fun addVolume() {
-        val volume = readInput("Enter volume for VOLUME instruction:")
+    private fun addVolume(volume: String) {
         instructions.volume(volume)
     }
 
-    private fun addWorkdir() {
-        val path = readInput("Enter path for WORKDIR instruction:")
+    private fun addWorkdir(path: String) {
         instructions.workdir(path)
     }
 
-    private fun addCopy() {
-        val source = readInput("Enter source for COPY instruction:")
-        val destination = readInput("Enter destination for COPY instruction:")
+    private fun addCopy(source: String, destination: String) {
         instructions.copy(source, destination)
     }
+
 
     private fun readInput(prompt: String, defaultValue: String = ""): String {
         print("$prompt ")
