@@ -5,8 +5,8 @@ import org.example.DSL.Instructions.*
 class InstructionsDockerfile {
     val instructions = mutableListOf<String>()
 
-    fun from(image: String, tag: String = "latest"): String {
-        val from = From(image, tag)
+    fun from(image: String, tag: String? = "latest"): String {
+        val from = From(image, tag?:"latest")
         val instruction = from.generate()
         instructions.add(instruction)
         return instruction

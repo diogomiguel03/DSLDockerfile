@@ -19,116 +19,57 @@ class GeneratorDockerfile(private val instructions: InstructionsDockerfile) {
         println("Dockerfile created at $filePath")
     }
 
-    fun createCustomDockerfile(instruction: String, parameters: String, filePath: String) {
-        when (instruction) {
-            "FROM" -> {
-                val (image, tag) = parameters.split(" ")
-                instructions.from(image, tag)
+    fun createCustomDockerfile(instruction: String, parameters: String? = null, filePath: String? = null) {
+        if (parameters != null) {
+            // Add instruction
+            when (instruction) {
+                "FROM" -> {
+                    val parts = parameters.split(" ")
+                    val image = parts[0]
+                    val tag = if (parts.size > 1) parts[1] else null
+                    instructions.from(image, tag)
+                }
+                "ADD" -> {
+                    val (source, destination) = parameters.split(" ")
+                    instructions.add(source, destination)
+                }
+                "ARG" -> {
+                    val (name, defaultValue) = parameters.split(" ")
+                    instructions.arg(name, defaultValue)
+                }
+                "CMD" -> instructions.cmd(parameters)
+                "ENTRYPOINT" -> instructions.entrypoint(parameters)
+                "ENV" -> {
+                    val (key, value) = parameters.split(" ")
+                    instructions.env(key, value)
+                }
+                "EXPOSE" -> instructions.expose(parameters.toInt())
+                "HEALTHCHECK" -> instructions.healthcheck(parameters)
+                "LABEL" -> {
+                    val (key, value) = parameters.split(" ")
+                    instructions.label(key, value)
+                }
+                "MAINTAINER" -> instructions.maintainer(parameters)
+                "RUN" -> instructions.run(parameters)
+                "SHELL" -> instructions.shell(parameters)
+                "STOPSIGNAL" -> instructions.stopsignal(parameters)
+                "USER" -> instructions.user(parameters)
+                "VOLUME" -> instructions.volume(parameters)
+                "WORKDIR" -> instructions.workdir(parameters)
+                "COPY" -> {
+                    val (source, destination) = parameters.split(" ")
+                    instructions.copy(source, destination)
+                }
+                else -> throw IllegalArgumentException("Unsupported instruction: $instruction")
             }
-            "ADD" -> {
-                val (source, destination) = parameters.split(" ")
-                instructions.add(source, destination)
-            }
-            "ARG" -> {
-                val (name, defaultValue) = parameters.split(" ")
-                instructions.arg(name, defaultValue)
-            }
-            "CMD" -> instructions.cmd(parameters)
-            "ENTRYPOINT" -> instructions.entrypoint(parameters)
-            "ENV" -> {
-                val (key, value) = parameters.split(" ")
-                instructions.env(key, value)
-            }
-            "EXPOSE" -> instructions.expose(parameters.toInt())
-            "HEALTHCHECK" -> instructions.healthcheck(parameters)
-            "LABEL" -> {
-                val (key, value) = parameters.split(" ")
-                instructions.label(key, value)
-            }
-            "MAINTAINER" -> instructions.maintainer(parameters)
-            "RUN" -> instructions.run(parameters)
-            "SHELL" -> instructions.shell(parameters)
-            "STOPSIGNAL" -> instructions.stopsignal(parameters)
-            "USER" -> instructions.user(parameters)
-            "VOLUME" -> instructions.volume(parameters)
-            "WORKDIR" -> instructions.workdir(parameters)
-            "COPY" -> {
-                val (source, destination) = parameters.split(" ")
-                instructions.copy(source, destination)
-            }
+        } else if (filePath != null) {
+            // Generate Dockerfile
+            val content = instructions.build()
+            File(filePath).writeText(content)
+        } else {
+            throw IllegalArgumentException("Either parameters or filePath must be provided")
         }
-        generate(filePath)
     }
-
-
-    private fun addFrom(image: String, tag: String = "latest") {
-        instructions.from(image, tag)
-    }
-
-    private fun addAdd(source: String, destination: String) {
-        instructions.add(source, destination)
-    }
-
-    private fun addArg(name: String, defaultValue: String? = null) {
-        instructions.arg(name, defaultValue)
-    }
-
-    private fun addCmd(command: String) {
-        instructions.cmd(command)
-    }
-
-    private fun addEntrypoint(command: String) {
-        instructions.entrypoint(command)
-    }
-
-    private fun addEnv(key: String, value: String) {
-        instructions.env(key, value)
-    }
-
-    private fun addExpose(port: Int) {
-        instructions.expose(port)
-    }
-
-    private fun addHealthcheck(command: String) {
-        instructions.healthcheck(command)
-    }
-
-    private fun addLabel(key: String, value: String) {
-        instructions.label(key, value)
-    }
-
-    private fun addMaintainer(name: String) {
-        instructions.maintainer(name)
-    }
-
-    private fun addRun(command: String) {
-        instructions.run(command)
-    }
-
-    private fun addShell(command: String) {
-        instructions.shell(command)
-    }
-
-    private fun addStopsignal(signal: String) {
-        instructions.stopsignal(signal)
-    }
-
-    private fun addUser(user: String) {
-        instructions.user(user)
-    }
-
-    private fun addVolume(volume: String) {
-        instructions.volume(volume)
-    }
-
-    private fun addWorkdir(path: String) {
-        instructions.workdir(path)
-    }
-
-    private fun addCopy(source: String, destination: String) {
-        instructions.copy(source, destination)
-    }
-
 
     private fun readInput(prompt: String, defaultValue: String = ""): String {
         print("$prompt ")
