@@ -2,6 +2,7 @@ package org.example.Views
 
 import javafx.beans.property.SimpleStringProperty
 import javafx.scene.control.Alert
+import javafx.scene.text.FontWeight
 import javafx.stage.FileChooser
 import org.example.CreateDockerfileView
 import org.example.DSL.InstructionsDockerfile
@@ -21,22 +22,42 @@ class CreateCustomDockerfileView : View("Create Custom Dockerfile") {
     private var generator = GeneratorDockerfile(instructions)
 
     override val root = vbox {
+        spacing = 10.0
+        paddingAll = 20.0
+
         label("Select Instruction:")
-        combobox(selectedInstruction, instructionTypes)
+        combobox(selectedInstruction, instructionTypes) {
+            prefWidth = 300.0
+        }
 
         label("Enter Parameters:")
-        textfield(parameterField)
+        textfield(parameterField) {
+            prefWidth = 300.0
+        }
 
-        button("Add Instruction") {
-            action {
-                addInstruction()
+        hbox {
+            spacing = 10.0
+            button("Add Instruction") {
+                action {
+                    addInstruction()
+                }
+            }
+            button("Generate Dockerfile") {
+                action {
+                    generateDockerfile()
+                }
             }
         }
 
-        button("Generate Dockerfile") {
-            action {
-                generateDockerfile()
+        label("Dockerfile Preview:") {
+            style {
+                fontWeight = FontWeight.BOLD
             }
+        }
+        textarea(generator.previewContent) {
+            isEditable = false
+            prefRowCount = 10
+            prefColumnCount = 40
         }
 
         button("Back") {

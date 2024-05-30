@@ -1,11 +1,13 @@
 package org.example.Generator
 
+import javafx.beans.property.SimpleStringProperty
 import org.example.DSL.InstructionsDockerfile
 import java.io.File
 import java.util.*
 
-class GeneratorDockerfile(private val instructions: InstructionsDockerfile) {
+class GeneratorDockerfile(val instructions: InstructionsDockerfile) {
     private val scanner = Scanner(System.`in`)
+    val previewContent = SimpleStringProperty()
 
     fun createDefaultDockerfile(image: String, tag: String, updateCommand: String, installCommand: String, workdirPath: String, copySource: String, copyDestination: String, compileCommand: String, cmdCommand: String, filePath: String) {
         instructions.from(image, tag)
@@ -62,6 +64,7 @@ class GeneratorDockerfile(private val instructions: InstructionsDockerfile) {
                 }
                 else -> throw IllegalArgumentException("Unsupported instruction: $instruction")
             }
+            updatePreview()
         } else if (filePath != null) {
             // Generate Dockerfile
             val content = instructions.build()
@@ -127,5 +130,11 @@ class GeneratorDockerfile(private val instructions: InstructionsDockerfile) {
 
         file.writeText(originalInstructions.joinToString("\n"))
         println("Dockerfile updated.")
+    }
+
+    // Method to update the preview content
+    private fun updatePreview() {
+        val dockerfileContent = instructions.build()
+        previewContent.set(dockerfileContent)
     }
 }
