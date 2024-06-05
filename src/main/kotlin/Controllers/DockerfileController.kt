@@ -1,12 +1,12 @@
-package org.example.Generator
+// File: DockerfileController.kt
+package org.example.Controllers
 
 import javafx.beans.property.SimpleStringProperty
 import org.example.DSL.InstructionsDockerfile
 import java.io.File
-import java.util.*
 
-class GeneratorDockerfile(val instructions: InstructionsDockerfile) {
-    private val scanner = Scanner(System.`in`)
+class DockerfileController {
+    private var instructions = InstructionsDockerfile()
     val previewContent = SimpleStringProperty()
 
     fun createDefaultDockerfile(image: String, tag: String, updateCommand: String, installCommand: String, workdirPath: String, copySource: String, copyDestination: String, compileCommand: String, cmdCommand: String, filePath: String) {
@@ -74,67 +74,18 @@ class GeneratorDockerfile(val instructions: InstructionsDockerfile) {
         }
     }
 
-    private fun readInput(prompt: String, defaultValue: String = ""): String {
-        print("$prompt ")
-        val input = scanner.nextLine()
-        return if (input.isBlank()) defaultValue else input
-    }
-
     private fun generate(filePath: String) {
         val content = instructions.build()
         File(filePath).writeText(content)
-    }
-
-    fun editDockerfile() {
-        println("Enter file path of Dockerfile to edit:")
-        val filePath = scanner.nextLine()
-        val file = File(filePath)
-        if (!file.exists()) {
-            println("File does not exist.")
-            return
-        }
-
-        val originalInstructions = file.readLines().toMutableList()
-        println("Original Dockerfile:")
-        originalInstructions.forEachIndexed { index, line -> println("${index + 1}. $line") }
-
-        println("Enter line number to edit (starting from 1):")
-        val lineNumber = scanner.nextLine().toInt() - 1
-        if (lineNumber !in originalInstructions.indices) {
-            println("Invalid line number.")
-            return
-        }
-
-        val instruction = originalInstructions[lineNumber]
-        when {
-            instruction.startsWith("FROM") -> {
-                val image = readInput("Enter new image for FROM instruction:")
-                val tag = readInput("Enter new tag for FROM instruction (leave blank for 'latest'):", "latest")
-                originalInstructions[lineNumber] = instructions.from(image, tag)
-            }
-            instruction.startsWith("RUN") -> {
-                val command = readInput("Enter new command for RUN instruction:")
-                originalInstructions[lineNumber] = "RUN $command"
-            }
-            instruction.startsWith("COPY") -> {
-                val source = readInput("Enter new source for COPY instruction:")
-                val destination = readInput("Enter new destination for COPY instruction:")
-                originalInstructions[lineNumber] = "COPY $source $destination"
-            }
-            // Add cases for other instructions as needed
-            else -> {
-                println("Unsupported instruction.")
-                return
-            }
-        }
-
-        file.writeText(originalInstructions.joinToString("\n"))
-        println("Dockerfile updated.")
     }
 
     // Method to update the preview content
     private fun updatePreview() {
         val dockerfileContent = instructions.build()
         previewContent.set(dockerfileContent)
+    }
+
+    fun resetInstructions() {
+        instructions = InstructionsDockerfile()
     }
 }

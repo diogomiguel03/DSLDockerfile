@@ -1,12 +1,10 @@
 // File: CreateDockerfileView.kt
-package org.example
+package org.example.Views
 
-import org.example.Views.CreateCustomDockerfileView
+import org.example.MainMenu
 import tornadofx.*
-import org.example.Views.CreateDefaultDockerfileView
 
 class CreateDockerfileView : View("Create Dockerfile") {
-
     override val root = vbox {
         button("Create Default Dockerfile (recommended)") {
             action {

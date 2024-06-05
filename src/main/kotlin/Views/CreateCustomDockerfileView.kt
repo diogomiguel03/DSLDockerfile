@@ -1,12 +1,11 @@
+// File: CreateCustomDockerfileView.kt
 package org.example.Views
 
 import javafx.beans.property.SimpleStringProperty
 import javafx.scene.control.Alert
 import javafx.scene.text.FontWeight
 import javafx.stage.FileChooser
-import org.example.CreateDockerfileView
-import org.example.DSL.InstructionsDockerfile
-import org.example.Generator.GeneratorDockerfile
+import org.example.Controllers.DockerfileController
 import tornadofx.*
 
 class CreateCustomDockerfileView : View("Create Custom Dockerfile") {
@@ -18,8 +17,7 @@ class CreateCustomDockerfileView : View("Create Custom Dockerfile") {
 
     private val selectedInstruction = SimpleStringProperty()
     private val parameterField = SimpleStringProperty()
-    private var instructions = InstructionsDockerfile()
-    private var generator = GeneratorDockerfile(instructions)
+    private val controller = DockerfileController()
 
     override val root = vbox {
         spacing = 10.0
@@ -54,7 +52,7 @@ class CreateCustomDockerfileView : View("Create Custom Dockerfile") {
                 fontWeight = FontWeight.BOLD
             }
         }
-        textarea(generator.previewContent) {
+        textarea(controller.previewContent) {
             isEditable = false
             prefRowCount = 10
             prefColumnCount = 40
@@ -72,7 +70,7 @@ class CreateCustomDockerfileView : View("Create Custom Dockerfile") {
         val parameters = parameterField.value
         if (instruction != null && parameters.isNotEmpty()) {
             try {
-                generator.createCustomDockerfile(instruction, parameters)
+                controller.createCustomDockerfile(instruction, parameters)
                 parameterField.set("")
                 alert(Alert.AlertType.INFORMATION, "Success", "Instruction added: $instruction $parameters")
             } catch (e: Exception) {
@@ -94,12 +92,11 @@ class CreateCustomDockerfileView : View("Create Custom Dockerfile") {
         if (selectedFile != null) {
             try {
                 val filePath = selectedFile.absolutePath
-                generator.createCustomDockerfile(instruction = "", filePath = filePath)
+                controller.createCustomDockerfile(instruction = "", filePath = filePath)
                 alert(Alert.AlertType.INFORMATION, "Success", "Dockerfile created at $filePath")
 
-                // Reset instructions and generator for the next creation
-                instructions = InstructionsDockerfile()
-                generator = GeneratorDockerfile(instructions)
+                // Reset controller for the next creation
+                controller.resetInstructions()
 
                 replaceWith<CreateDockerfileView>()
             } catch (e: Exception) {

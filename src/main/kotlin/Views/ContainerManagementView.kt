@@ -1,23 +1,22 @@
+// File: ContainerManagementView.kt
 package org.example.Views
 
 import javafx.beans.property.SimpleStringProperty
 import javafx.collections.FXCollections
 import javafx.scene.control.Alert
 import javafx.scene.text.FontWeight
-import org.example.Generator.ContainerManager
+import org.example.Controllers.ContainerController
+import org.example.Models.Container
 import org.example.MainMenu
 import tornadofx.*
 
 class ContainerManagementView : View("Container Management") {
-    private val containerManager = ContainerManager()
+    private val controller = ContainerController()
+    private val containerModel = Container()
     private val availableImages = FXCollections.observableArrayList<String>()
     private val selectedImage = SimpleStringProperty()
     private val availableContainers = FXCollections.observableArrayList<String>()
     private val selectedContainer = SimpleStringProperty()
-    private val containerName = SimpleStringProperty()
-    private val ports = SimpleStringProperty()
-    private val envVars = SimpleStringProperty()
-    private val volumes = SimpleStringProperty()
 
     override val root = vbox {
         paddingAll = 20
@@ -37,7 +36,7 @@ class ContainerManagementView : View("Container Management") {
             spacing = 10.0
             button("List Running Containers") {
                 action {
-                    val containers = containerManager.listContainers()
+                    val containers = controller.listContainers()
                     alert(Alert.AlertType.INFORMATION, "Running Containers", containers.joinToString("\n"))
                 }
                 style {
@@ -48,7 +47,7 @@ class ContainerManagementView : View("Container Management") {
             }
             button("List All Containers") {
                 action {
-                    val containers = containerManager.listContainers(true)
+                    val containers = controller.listContainers(true)
                     alert(Alert.AlertType.INFORMATION, "All Containers", containers.joinToString("\n"))
                 }
                 style {
@@ -66,7 +65,7 @@ class ContainerManagementView : View("Container Management") {
             }
         }
 
-        textfield(containerName) {
+        textfield(containerModel.name) {
             promptText = "Container Name"
             prefWidth = 300.0
         }
@@ -74,12 +73,12 @@ class ContainerManagementView : View("Container Management") {
         hbox {
             spacing = 10.0
             combobox(selectedImage, availableImages) {
-                promptText = "Select Docker Image (optional)"
+                promptText = "Select Docker Image"
                 prefWidth = 300.0
             }
             button("Refresh Images") {
                 action {
-                    availableImages.setAll(containerManager.listImages())
+                    availableImages.setAll(controller.listImages())
                 }
                 style {
                     backgroundColor += c("#bde0fe")
@@ -89,37 +88,34 @@ class ContainerManagementView : View("Container Management") {
             }
         }
 
-        textfield(ports) {
+        textfield(containerModel.ports) {
             promptText = "Ports (optional, format: hostPort:containerPort,...)"
             prefWidth = 300.0
         }
 
-        textfield(envVars) {
+        textfield(containerModel.envVars) {
             promptText = "Environment Variables (optional, format: KEY=VALUE,...)"
             prefWidth = 300.0
         }
 
-        textfield(volumes) {
+        textfield(containerModel.volumes) {
             promptText = "Volumes (optional, format: hostPath:containerPath,...)"
             prefWidth = 300.0
         }
 
         button("Run Container") {
             action {
-                val contName = containerName.get()
-                val imgName = selectedImage.get()
-                val portMappings = ports.get()?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
-                val environmentVariables = envVars.get()?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
-                val volumeMappings = volumes.get()?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
-
-                if (contName.isNullOrEmpty()) {
+                val imageParts = selectedImage.get().split(":")
+                containerModel.imageName.set(imageParts[0])
+                containerModel.imageTag.set(if (imageParts.size > 1) imageParts[1] else "latest")
+                if (containerModel.name.get().isNullOrEmpty()) {
                     alert(Alert.AlertType.WARNING, "Warning", "Please provide a container name.")
                 } else {
-                    val success = containerManager.runContainer(contName, imgName, portMappings, environmentVariables, volumeMappings)
+                    val success = controller.runContainer(containerModel)
                     if (success) {
                         alert(Alert.AlertType.INFORMATION, "Success", "Container started successfully.")
                     } else {
-                        alert(Alert.AlertType.ERROR, "Error", "Failed to start container.")
+                        alert(Alert.AlertType.ERROR, "Error", controller.outputLog.get())
                     }
                 }
             }
@@ -145,7 +141,7 @@ class ContainerManagementView : View("Container Management") {
             }
             button("Refresh Containers") {
                 action {
-                    availableContainers.setAll(containerManager.listContainers(true))
+                    availableContainers.setAll(controller.listContainers(true))
                 }
                 style {
                     backgroundColor += c("#bde0fe")
@@ -163,11 +159,11 @@ class ContainerManagementView : View("Container Management") {
                     if (contName.isNullOrEmpty()) {
                         alert(Alert.AlertType.WARNING, "Warning", "Please select a container to stop.")
                     } else {
-                        val success = containerManager.stopContainer(contName)
+                        val success = controller.stopContainer(contName)
                         if (success) {
                             alert(Alert.AlertType.INFORMATION, "Success", "Container stopped successfully.")
                         } else {
-                            alert(Alert.AlertType.ERROR, "Error", "Failed to stop container.")
+                            alert(Alert.AlertType.ERROR, "Error", controller.outputLog.get())
                         }
                     }
                 }
@@ -183,11 +179,11 @@ class ContainerManagementView : View("Container Management") {
                     if (contName.isNullOrEmpty()) {
                         alert(Alert.AlertType.WARNING, "Warning", "Please select a container to remove.")
                     } else {
-                        val success = containerManager.removeContainer(contName)
+                        val success = controller.removeContainer(contName)
                         if (success) {
                             alert(Alert.AlertType.INFORMATION, "Success", "Container removed successfully.")
                         } else {
-                            alert(Alert.AlertType.ERROR, "Error", "Failed to remove container.")
+                            alert(Alert.AlertType.ERROR, "Error", controller.outputLog.get())
                         }
                     }
                 }
@@ -203,11 +199,11 @@ class ContainerManagementView : View("Container Management") {
                     if (contName.isNullOrEmpty()) {
                         alert(Alert.AlertType.WARNING, "Warning", "Please select a container to start.")
                     } else {
-                        val success = containerManager.startContainer(contName)
+                        val success = controller.startContainer(contName)
                         if (success) {
                             alert(Alert.AlertType.INFORMATION, "Success", "Container started successfully.")
                         } else {
-                            alert(Alert.AlertType.ERROR, "Error", "Failed to start container.")
+                            alert(Alert.AlertType.ERROR, "Error", controller.outputLog.get())
                         }
                     }
                 }
@@ -227,7 +223,7 @@ class ContainerManagementView : View("Container Management") {
     }
 
     init {
-        availableImages.setAll(containerManager.listImages())
-        availableContainers.setAll(containerManager.listContainers(true)) // Load all containers initially
+        availableImages.setAll(controller.listImages())
+        availableContainers.setAll(controller.listContainers(true)) // Load all containers initially
     }
 }

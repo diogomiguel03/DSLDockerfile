@@ -3,13 +3,11 @@ package org.example.Views
 
 import javafx.stage.FileChooser
 import tornadofx.*
-import org.example.Generator.GeneratorDockerfile
-import org.example.DSL.InstructionsDockerfile
+import org.example.Controllers.DockerfileController
 import org.example.MainMenu
 
 class CreateDefaultDockerfileView : View("Create Default Dockerfile") {
-    private val instructions = InstructionsDockerfile()
-    private val generator = GeneratorDockerfile(instructions)
+    private val controller = DockerfileController()
 
     override val root = form {
         fieldset("Create Default Dockerfile") {
@@ -71,7 +69,7 @@ class CreateDefaultDockerfileView : View("Create Default Dockerfile") {
                             error("Error", "All fields must be filled")
                         } else {
                             try {
-                                generator.createDefaultDockerfile(
+                                controller.createDefaultDockerfile(
                                     imageField.text,
                                     tagField.text,
                                     updateCommandField.text,
@@ -94,7 +92,6 @@ class CreateDefaultDockerfileView : View("Create Default Dockerfile") {
                     }
                 }
             }
-
         }
     }
 }

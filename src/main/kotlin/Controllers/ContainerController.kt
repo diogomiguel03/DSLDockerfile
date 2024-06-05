@@ -1,11 +1,17 @@
-package org.example.Generator
+// File: ContainerController.kt
+package org.example.Controllers
 
+import javafx.beans.property.SimpleStringProperty
+import org.example.Models.Container
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
-class ContainerManager {
+class ContainerController {
+
+    val outputLog = SimpleStringProperty()
+
     fun listContainers(all: Boolean = false): List<String> {
-        val args = if (all) listOf("docker", "ps", "-a", "--format", "{{.ID}}") else listOf("docker", "ps", "--format", "{{.ID}}")
+        val args = if (all) listOf("docker", "ps", "-a", "--format", "{{.Names}}") else listOf("docker", "ps", "--format", "{{.Names}}")
         return runCommand(args).second
     }
 
@@ -14,15 +20,16 @@ class ContainerManager {
         return runCommand(args).second
     }
 
-    fun runContainer(containerName: String, imageName: String? = null, ports: List<String> = emptyList(), envs: List<String> = emptyList(), volumes: List<String> = emptyList()): Boolean {
-        val portArgs = ports.flatMap { listOf("-p", it) }
-        val envArgs = envs.flatMap { listOf("-e", it) }
-        val volumeArgs = volumes.flatMap { listOf("-v", it) }
-        val args = listOf("docker", "run", "--name", containerName) + portArgs + envArgs + volumeArgs + (imageName?.let { listOf("-d", it) } ?: emptyList())
+    fun runContainer(container: Container): Boolean {
+        val portArgs = container.ports.get().split(",").filter { it.isNotBlank() }.flatMap { listOf("-p", it) }
+        val envArgs = container.envVars.get().split(",").filter { it.isNotBlank() }.flatMap { listOf("-e", it) }
+        val volumeArgs = container.volumes.get().split(",").filter { it.isNotBlank() }.flatMap { listOf("-v", it) }
+        val fullImageName = "${container.imageName.get()}:${container.imageTag.get()}"
+        val args = listOf("docker", "run", "--name", container.name.get()) + portArgs + envArgs + volumeArgs + listOf("-d", fullImageName)
         println("Running command: ${args.joinToString(" ")}")
         val (success, output) = runCommand(args)
         if (!success) {
-            println("Error output: ${output.joinToString("\n")}")
+            outputLog.set("Error output: ${output.joinToString("\n")}")
         }
         return success
     }
@@ -32,7 +39,7 @@ class ContainerManager {
         println("Running command: ${args.joinToString(" ")}")
         val (success, output) = runCommand(args)
         if (!success) {
-            println("Error output: ${output.joinToString("\n")}")
+            outputLog.set("Error output: ${output.joinToString("\n")}")
         }
         return success
     }
@@ -42,7 +49,7 @@ class ContainerManager {
         println("Running command: ${args.joinToString(" ")}")
         val (success, output) = runCommand(args)
         if (!success) {
-            println("Error output: ${output.joinToString("\n")}")
+            outputLog.set("Error output: ${output.joinToString("\n")}")
         }
         return success
     }
@@ -52,7 +59,7 @@ class ContainerManager {
         println("Running command: ${args.joinToString(" ")}")
         val (success, output) = runCommand(args)
         if (!success) {
-            println("Error output: ${output.joinToString("\n")}")
+            outputLog.set("Error output: ${output.joinToString("\n")}")
         }
         return success
     }

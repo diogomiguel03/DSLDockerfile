@@ -14,15 +14,17 @@ val javaFXVersion = "22.0.1"
 val javaFXSDK = "/Users/diogosilva/javafx-sdk-22.0.1/lib" // Change this to the correct path of your JavaFX SDK
 
 dependencies {
-
-
     testImplementation(kotlin("test"))
 
-    implementation ("no.tornado:tornadofx:1.7.20")
+    implementation("no.tornado:tornadofx:1.7.20")
     implementation("org.openjfx:javafx-base:$javaFXVersion:mac-aarch64")
     implementation("org.openjfx:javafx-controls:$javaFXVersion:mac-aarch64")
     implementation("org.openjfx:javafx-fxml:$javaFXVersion:mac-aarch64")
     implementation("org.openjfx:javafx-graphics:$javaFXVersion:mac-aarch64")
+    implementation("org.openjfx:javafx-web:$javaFXVersion:mac-aarch64")
+
+    // Use GraphStream version 1.3
+    implementation("org.graphstream:gs-core:1.3")
 }
 
 tasks.test {
@@ -38,6 +40,6 @@ application {
 
     applicationDefaultJvmArgs = listOf(
         "--module-path", javaFXSDK,
-        "--add-modules", "javafx.controls,javafx.fxml"
+        "--add-modules", "javafx.controls,javafx.fxml,javafx.web"
     )
 }

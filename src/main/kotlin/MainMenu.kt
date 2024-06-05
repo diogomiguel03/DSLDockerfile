@@ -4,6 +4,8 @@ import javafx.application.Platform
 import javafx.geometry.Pos
 import org.example.Views.ContainerManagementView
 import org.example.Views.CreateDockerImageView
+import org.example.Views.CreateDockerfileView
+//import org.example.Views.VisualizationView
 import tornadofx.*
 
 class MainMenu : View("Main Menu") {
@@ -62,6 +64,23 @@ class MainMenu : View("Main Menu") {
                     style {
                         backgroundColor += c("#bde0fe")
                         textFill = c("#000000") // black text
+                        fontSize = 16.px
+                        padding = box(15.px, 30.px)
+                        borderRadius += box(15.px)
+                        borderColor += box(c("#bde0fe"))
+                        borderWidth += box(2.px)
+                        minWidth = 150.px
+                        alignment = Pos.CENTER
+                    }
+                }
+
+                button("Visualize Docker Graph") {
+                    action {
+                       // replaceWith<VisualizationView>()
+                    }
+                    style {
+                        backgroundColor += c("#bde0fe")
+                        textFill = c("#000000")
                         fontSize = 16.px
                         padding = box(15.px, 30.px)
                         borderRadius += box(15.px)
