@@ -22,9 +22,9 @@ dependencies {
     implementation("org.openjfx:javafx-fxml:$javaFXVersion:mac-aarch64")
     implementation("org.openjfx:javafx-graphics:$javaFXVersion:mac-aarch64")
     implementation("org.openjfx:javafx-web:$javaFXVersion:mac-aarch64")
-
-    // Use GraphStream version 1.3
-    implementation("org.graphstream:gs-core:1.3")
+    implementation("io.github.microutils:kotlin-logging-jvm:3.0.4")
+    implementation("ch.qos.logback:logback-classic:1.2.11")
+    implementation("com.typesafe:config:1.4.2")
 }
 
 tasks.test {

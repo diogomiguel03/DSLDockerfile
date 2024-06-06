@@ -2,16 +2,20 @@
 package org.example.Controllers
 
 import javafx.beans.property.SimpleStringProperty
+import mu.KotlinLogging
+import org.example.Config
 import org.example.Models.Container
 import java.io.BufferedReader
 import java.io.InputStreamReader
+
+private val logger = KotlinLogging.logger {}
 
 class ContainerController {
 
     val outputLog = SimpleStringProperty()
 
     fun listContainers(all: Boolean = false): List<String> {
-        val args = if (all) listOf("docker", "ps", "-a", "--format", "{{.Names}}") else listOf("docker", "ps", "--format", "{{.Names}}")
+        val args = if (all) listOf("docker", "ps", "-a", "--format", "{{.ID}} {{.Names}}") else listOf("docker", "ps", "--format", "{{.ID}} {{.Names}}")
         return runCommand(args).second
     }
 
@@ -24,42 +28,47 @@ class ContainerController {
         val portArgs = container.ports.get().split(",").filter { it.isNotBlank() }.flatMap { listOf("-p", it) }
         val envArgs = container.envVars.get().split(",").filter { it.isNotBlank() }.flatMap { listOf("-e", it) }
         val volumeArgs = container.volumes.get().split(",").filter { it.isNotBlank() }.flatMap { listOf("-v", it) }
-        val fullImageName = "${container.imageName.get()}:${container.imageTag.get()}"
+        val imageTag = if (container.imageTag.get().isNotBlank()) container.imageTag.get() else Config.defaultTag
+        val fullImageName = "${container.imageName.get()}:$imageTag"
         val args = listOf("docker", "run", "--name", container.name.get()) + portArgs + envArgs + volumeArgs + listOf("-d", fullImageName)
-        println("Running command: ${args.joinToString(" ")}")
+        logger.info { "Running command: ${args.joinToString(" ")}" }
         val (success, output) = runCommand(args)
         if (!success) {
             outputLog.set("Error output: ${output.joinToString("\n")}")
+            logger.error { "Error output: ${output.joinToString("\n")}" }
         }
         return success
     }
 
     fun stopContainer(containerName: String): Boolean {
         val args = listOf("docker", "stop", containerName)
-        println("Running command: ${args.joinToString(" ")}")
+        logger.info { "Stopping container: $containerName" }
         val (success, output) = runCommand(args)
         if (!success) {
             outputLog.set("Error output: ${output.joinToString("\n")}")
+            logger.error { "Error output: ${output.joinToString("\n")}" }
         }
         return success
     }
 
     fun removeContainer(containerName: String): Boolean {
         val args = listOf("docker", "rm", containerName)
-        println("Running command: ${args.joinToString(" ")}")
+        logger.info { "Removing container: $containerName" }
         val (success, output) = runCommand(args)
         if (!success) {
             outputLog.set("Error output: ${output.joinToString("\n")}")
+            logger.error { "Error output: ${output.joinToString("\n")}" }
         }
         return success
     }
 
     fun startContainer(containerName: String): Boolean {
         val args = listOf("docker", "start", containerName)
-        println("Running command: ${args.joinToString(" ")}")
+        logger.info { "Starting container: $containerName" }
         val (success, output) = runCommand(args)
         if (!success) {
             outputLog.set("Error output: ${output.joinToString("\n")}")
+            logger.error { "Error output: ${output.joinToString("\n")}" }
         }
         return success
     }
@@ -71,20 +80,25 @@ class ContainerController {
 
     private fun runCommand(args: List<String>): Pair<Boolean, List<String>> {
         val processBuilder = ProcessBuilder(args)
-        val process = processBuilder.start()
-        val output = mutableListOf<String>()
-        val errorOutput = mutableListOf<String>()
-        BufferedReader(InputStreamReader(process.inputStream)).use { reader ->
-            reader.lines().forEach { output.add(it) }
+        return try {
+            val process = processBuilder.start()
+            val output = mutableListOf<String>()
+            val errorOutput = mutableListOf<String>()
+            BufferedReader(InputStreamReader(process.inputStream)).use { reader ->
+                reader.lines().forEach { output.add(it) }
+            }
+            BufferedReader(InputStreamReader(process.errorStream)).use { reader ->
+                reader.lines().forEach { errorOutput.add(it) }
+            }
+            val exitCode = process.waitFor()
+            val success = exitCode == 0
+            if (!success) {
+                output.addAll(errorOutput)
+            }
+            Pair(success, output)
+        } catch (e: Exception) {
+            logger.error(e) { "Command execution failed: ${args.joinToString(" ")}" }
+            Pair(false, listOf("Error: ${e.message}"))
         }
-        BufferedReader(InputStreamReader(process.errorStream)).use { reader ->
-            reader.lines().forEach { errorOutput.add(it) }
-        }
-        val exitCode = process.waitFor()
-        val success = exitCode == 0
-        if (!success) {
-            output.addAll(errorOutput)
-        }
-        return Pair(success, output)
     }
 }

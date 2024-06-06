@@ -4,6 +4,7 @@ package org.example.Views
 import javafx.beans.property.SimpleStringProperty
 import javafx.collections.FXCollections
 import javafx.scene.control.Alert
+import javafx.scene.control.TextArea
 import javafx.scene.text.FontWeight
 import org.example.Controllers.ContainerController
 import org.example.Models.Container
@@ -126,7 +127,7 @@ class ContainerManagementView : View("Container Management") {
             }
         }
 
-        label("Stop, Remove, and Start Container") {
+        label("Stop, Remove, Start, and View Logs of Container") {
             style {
                 fontSize = 16.px
                 fontWeight = FontWeight.BOLD
@@ -141,7 +142,8 @@ class ContainerManagementView : View("Container Management") {
             }
             button("Refresh Containers") {
                 action {
-                    availableContainers.setAll(controller.listContainers(true))
+                    val containers = controller.listContainers(true)
+                    availableContainers.setAll(containers.map { it.split(" ")[1] }) // Only container names
                 }
                 style {
                     backgroundColor += c("#bde0fe")
@@ -213,6 +215,32 @@ class ContainerManagementView : View("Container Management") {
                     borderRadius += box(10.px)
                 }
             }
+            button("View Logs") {
+                action {
+                    val contName = selectedContainer.get()
+                    if (contName.isNullOrEmpty()) {
+                        alert(Alert.AlertType.WARNING, "Warning", "Please select a container to view logs.")
+                    } else {
+                        val logs = controller.getContainerLogs(contName).joinToString("\n")
+                        val logArea = TextArea(logs).apply {
+                            isEditable = false
+                            prefRowCount = 20
+                            prefColumnCount = 50
+                        }
+                        val logAlert = Alert(Alert.AlertType.INFORMATION).apply {
+                            title = "Container Logs"
+                            headerText = "Logs for container: $contName"
+                            dialogPane.content = logArea
+                        }
+                        logAlert.showAndWait()
+                    }
+                }
+                style {
+                    backgroundColor += c("#bde0fe")
+                    paddingAll = 10
+                    borderRadius += box(10.px)
+                }
+            }
         }
 
         button("Back") {
@@ -224,6 +252,7 @@ class ContainerManagementView : View("Container Management") {
 
     init {
         availableImages.setAll(controller.listImages())
-        availableContainers.setAll(controller.listContainers(true)) // Load all containers initially
+        val containers = controller.listContainers(true)
+        availableContainers.setAll(containers.map { it.split(" ")[1] }) // Only container names
     }
 }
