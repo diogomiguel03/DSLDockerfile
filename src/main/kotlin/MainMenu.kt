@@ -5,6 +5,7 @@ import javafx.geometry.Pos
 import org.example.Views.ContainerManagementView
 import org.example.Views.CreateDockerImageView
 import org.example.Views.CreateDockerfileView
+import org.example.Views.DockerComposeView
 //import org.example.Views.VisualizationView
 import tornadofx.*
 
@@ -76,7 +77,7 @@ class MainMenu : View("Main Menu") {
 
                 button("Visualize Docker Graph") {
                     action {
-                       // replaceWith<VisualizationView>()
+                       replaceWith<DockerComposeView>()
                     }
                     style {
                         backgroundColor += c("#bde0fe")
