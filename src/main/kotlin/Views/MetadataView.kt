@@ -70,11 +70,8 @@ class MetadataView : View("Metadata Viewer") {
             content.append("Dockerfile: ${metadata.dockerfilePath}\n")
             content.append("Name: ${metadata.name}\n")
             content.append("Timestamp: ${metadata.timestamp}\n")
-            if (metadata.imageName != null) {
-                content.append("Created Image: ${metadata.imageName}\n")
-            } else {
-                content.append("Created Image: Not yet created\n")
-            }
+            content.append("Created Images: ${if (metadata.imageNames.isNotEmpty()) metadata.imageNames.joinToString(", ") else "None"}\n")
+            content.append("Containers: ${if (metadata.containers.isNotEmpty()) metadata.containers.joinToString(", ") else "None"}\n")
             content.append("\n\n")
         }
         metadataContent.set(content.toString())

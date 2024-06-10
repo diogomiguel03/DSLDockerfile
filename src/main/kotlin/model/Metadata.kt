@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 data class Metadata @JsonCreator constructor(
     @JsonProperty("name") val name: String,
     @JsonProperty("timestamp") val timestamp: String,
-    @JsonProperty("imageName") var imageName: String? = null,
-    @JsonProperty("dockerfilePath") val dockerfilePath: String
+    @JsonProperty("dockerfilePath") val dockerfilePath: String,
+    @JsonProperty("imageNames") val imageNames: MutableList<String> = mutableListOf(),
+    @JsonProperty("containers") val containers: MutableList<String> = mutableListOf()
 )

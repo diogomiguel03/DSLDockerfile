@@ -45,20 +45,18 @@ class DockerImageController(private val model: DockerImage) {
             val process = processBuilder.start()
 
             val reader = BufferedReader(InputStreamReader(process.inputStream))
-            val output = StringBuilder()
-            reader.lines().forEach { output.append(it).append("\n") }
+            reader.lines().forEach { outputLog.set(it) }
 
             val exitCode = process.waitFor()
-            outputLog.set(output.toString())
             return if (exitCode == 0) {
                 val message = "Docker image created successfully with name: $fullImageName"
                 outputLog.set(message)
                 updateMetadataFile(dockerfilePath, fullImageName)
                 true
             } else {
-                val message = "Failed to create Docker image. Exit code: $exitCode\n$output"
+                val message = "Failed to create Docker image. Exit code: $exitCode"
                 outputLog.set(message)
-                return false
+                false
             }
         } catch (e: Exception) {
             val message = "An error occurred while creating the Docker image: ${e.message}"
@@ -72,7 +70,7 @@ class DockerImageController(private val model: DockerImage) {
             val metadataFile = File(File(dockerfilePath).parent, "metadata-info.json")
             if (metadataFile.exists()) {
                 val metadata: Metadata = objectMapper.readValue(metadataFile)
-                metadata.imageName = imageName
+                metadata.imageNames.add(imageName)
                 objectMapper.writeValue(metadataFile, metadata)
                 outputLog.set("Metadata file updated: ${metadataFile.absolutePath}")
             } else {

@@ -10,4 +10,5 @@ class Container {
     val ports = SimpleStringProperty("")
     val envVars = SimpleStringProperty("")
     val volumes = SimpleStringProperty("")
+    val dockerfilePath = SimpleStringProperty()
 }
