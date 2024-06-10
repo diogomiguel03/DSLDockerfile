@@ -2,13 +2,11 @@
 package org.example.Controllers
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import javafx.beans.property.SimpleStringProperty
 import org.example.DSL.InstructionsDockerfile
+import org.example.Models.Metadata
 import java.io.File
 import java.time.Instant
-
-data class DockerfileMetadata(val name: String, val timestamp: String, var imageName: String? = null)
 
 class DockerfileController {
     private var instructions = InstructionsDockerfile()
@@ -42,9 +40,10 @@ class DockerfileController {
     }
 
     private fun createMetadataFile(dockerfileName: String, filePath: String) {
-        val metadata = DockerfileMetadata(
+        val metadata = Metadata(
             name = dockerfileName,
-            timestamp = Instant.now().toString()
+            timestamp = Instant.now().toString(),
+            dockerfilePath = filePath
         )
         val metadataFile = File(File(filePath).parent, "metadata-info.json")
         objectMapper.writeValue(metadataFile, metadata)

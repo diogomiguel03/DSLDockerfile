@@ -1,10 +1,13 @@
 // File: MetadataView.kt
 package org.example.Views
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import javafx.beans.property.SimpleStringProperty
 import javafx.scene.control.Alert
 import javafx.stage.DirectoryChooser
 import org.example.MainMenu
+import org.example.Models.Metadata
 import tornadofx.*
 import java.io.File
 
@@ -62,10 +65,23 @@ class MetadataView : View("Metadata Viewer") {
 
         val content = StringBuilder()
         for (file in metadataFiles) {
-            content.append("Metadata file: ${file.name}\n")
-            content.append(file.readText())
+            val metadata = parseMetadataFile(file)
+            content.append("Metadata file: ${file.absolutePath}\n")
+            content.append("Dockerfile: ${metadata.dockerfilePath}\n")
+            content.append("Name: ${metadata.name}\n")
+            content.append("Timestamp: ${metadata.timestamp}\n")
+            if (metadata.imageName != null) {
+                content.append("Created Image: ${metadata.imageName}\n")
+            } else {
+                content.append("Created Image: Not yet created\n")
+            }
             content.append("\n\n")
         }
         metadataContent.set(content.toString())
+    }
+
+    private fun parseMetadataFile(file: File): Metadata {
+        val objectMapper = jacksonObjectMapper()
+        return objectMapper.readValue(file, Metadata::class.java)
     }
 }

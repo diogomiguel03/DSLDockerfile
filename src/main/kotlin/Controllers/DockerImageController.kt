@@ -5,6 +5,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import javafx.beans.property.SimpleStringProperty
 import org.example.Models.DockerImage
+import org.example.Models.Metadata
 import org.example.Config
 import java.io.BufferedReader
 import java.io.File
@@ -70,7 +71,7 @@ class DockerImageController(private val model: DockerImage) {
         try {
             val metadataFile = File(File(dockerfilePath).parent, "metadata-info.json")
             if (metadataFile.exists()) {
-                val metadata: DockerfileMetadata = objectMapper.readValue(metadataFile)
+                val metadata: Metadata = objectMapper.readValue(metadataFile)
                 metadata.imageName = imageName
                 objectMapper.writeValue(metadataFile, metadata)
                 outputLog.set("Metadata file updated: ${metadataFile.absolutePath}")
