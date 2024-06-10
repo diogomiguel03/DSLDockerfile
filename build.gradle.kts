@@ -25,6 +25,8 @@ dependencies {
     implementation("io.github.microutils:kotlin-logging-jvm:3.0.4")
     implementation("ch.qos.logback:logback-classic:1.2.11")
     implementation("com.typesafe:config:1.4.2")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.14.0")
+    implementation("org.slf4j:slf4j-api:1.7.32")
 }
 
 tasks.test {

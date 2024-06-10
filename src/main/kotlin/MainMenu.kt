@@ -1,3 +1,4 @@
+// File: MainMenu.kt
 package org.example
 
 import javafx.application.Platform
@@ -6,7 +7,7 @@ import org.example.Views.ContainerManagementView
 import org.example.Views.CreateDockerImageView
 import org.example.Views.CreateDockerfileView
 import org.example.Views.DockerComposeView
-//import org.example.Views.VisualizationView
+import org.example.Views.MetadataView
 import tornadofx.*
 
 class MainMenu : View("Main Menu") {
@@ -75,13 +76,30 @@ class MainMenu : View("Main Menu") {
                     }
                 }
 
-                button("Visualize Docker Graph") {
+                button("Create Docker Compose") {
                     action {
-                       replaceWith<DockerComposeView>()
+                        replaceWith<DockerComposeView>()
                     }
                     style {
                         backgroundColor += c("#bde0fe")
-                        textFill = c("#000000")
+                        textFill = c("#000000") // black text
+                        fontSize = 16.px
+                        padding = box(15.px, 30.px)
+                        borderRadius += box(15.px)
+                        borderColor += box(c("#bde0fe"))
+                        borderWidth += box(2.px)
+                        minWidth = 150.px
+                        alignment = Pos.CENTER
+                    }
+                }
+
+                button("View Metadata") {
+                    action {
+                        replaceWith<MetadataView>()
+                    }
+                    style {
+                        backgroundColor += c("#bde0fe")
+                        textFill = c("#000000") // black text
                         fontSize = 16.px
                         padding = box(15.px, 30.px)
                         borderRadius += box(15.px)
