@@ -5,6 +5,8 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import javafx.beans.property.SimpleStringProperty
 import javafx.scene.control.Alert
+import javafx.scene.layout.VBox
+import javafx.scene.text.Text
 import javafx.stage.DirectoryChooser
 import org.example.MainMenu
 import org.example.Models.Metadata
@@ -13,7 +15,10 @@ import java.io.File
 
 class MetadataView : View("Metadata Viewer") {
     private val selectedDirectory = SimpleStringProperty()
-    private val metadataContent = SimpleStringProperty()
+    private val metadataContent = VBox().apply {
+        spacing = 10.0
+        paddingAll = 20.0
+    }
 
     override val root = vbox {
         spacing = 10.0
@@ -40,10 +45,8 @@ class MetadataView : View("Metadata Viewer") {
         }
 
         label("Metadata Content:")
-        textarea(metadataContent) {
-            isEditable = false
-            prefRowCount = 15
-            prefColumnCount = 50
+        scrollpane {
+            content = metadataContent
         }
 
         button("Back") {
@@ -59,22 +62,17 @@ class MetadataView : View("Metadata Viewer") {
             .toList()
 
         if (metadataFiles.isEmpty()) {
-            metadataContent.set("No metadata files found in the selected directory.")
+            metadataContent.clear()
+            metadataContent.add(Text("No metadata files found in the selected directory."))
             return
         }
 
-        val content = StringBuilder()
+        metadataContent.clear()
         for (file in metadataFiles) {
             val metadata = parseMetadataFile(file)
-            content.append("Metadata file: ${file.absolutePath}\n")
-            content.append("Dockerfile: ${metadata.dockerfilePath}\n")
-            content.append("Name: ${metadata.name}\n")
-            content.append("Timestamp: ${metadata.timestamp}\n")
-            content.append("Created Images: ${if (metadata.imageNames.isNotEmpty()) metadata.imageNames.joinToString(", ") else "None"}\n")
-            content.append("Containers: ${if (metadata.containers.isNotEmpty()) metadata.containers.joinToString(", ") else "None"}\n")
-            content.append("\n\n")
+            val metadataPane = MetadataEntryPane(metadata)
+            metadataContent.add(metadataPane)
         }
-        metadataContent.set(content.toString())
     }
 
     private fun parseMetadataFile(file: File): Metadata {

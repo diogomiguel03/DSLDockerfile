@@ -35,15 +35,37 @@ class DockerfileController {
         generate(filePath)
 
         val dockerfileName = File(filePath).nameWithoutExtension
-        createMetadataFile(dockerfileName, filePath)
+        val dockerfileType = determineDockerfileType(image)
+        createMetadataFile(dockerfileName, filePath, dockerfileType)
         println("Dockerfile created at $filePath")
     }
 
-    private fun createMetadataFile(dockerfileName: String, filePath: String) {
+    private fun determineDockerfileType(image: String): String {
+        return when {
+            image.contains("python", ignoreCase = true) -> "Python"
+            image.contains("node", ignoreCase = true) -> "Node.js"
+            image.contains("openjdk", ignoreCase = true) -> "Java"
+            image.contains("golang", ignoreCase = true) -> "Go"
+            image.contains("ruby", ignoreCase = true) -> "Ruby"
+            image.contains("php", ignoreCase = true) -> "PHP"
+            image.contains("nginx", ignoreCase = true) -> "Nginx"
+            image.startsWith("python", ignoreCase = true) -> "Python"
+            image.startsWith("node", ignoreCase = true) -> "Node.js"
+            image.startsWith("openjdk", ignoreCase = true) -> "Java"
+            image.startsWith("golang", ignoreCase = true) -> "Go"
+            image.startsWith("ruby", ignoreCase = true) -> "Ruby"
+            image.startsWith("php", ignoreCase = true) -> "PHP"
+            image.startsWith("nginx", ignoreCase = true) -> "Nginx"
+            else -> "Unknown"
+        }
+    }
+
+    private fun createMetadataFile(dockerfileName: String, filePath: String, dockerfileType: String) {
         val metadata = Metadata(
             name = dockerfileName,
             timestamp = Instant.now().toString(),
-            dockerfilePath = filePath
+            dockerfilePath = filePath,
+            dockerfileType = dockerfileType
         )
         val metadataFile = File(File(filePath).parent, "metadata-info.json")
         objectMapper.writeValue(metadataFile, metadata)
@@ -99,7 +121,8 @@ class DockerfileController {
             File(filePath).writeText(content)
 
             val dockerfileName = File(filePath).nameWithoutExtension
-            createMetadataFile(dockerfileName, filePath)
+            val dockerfileType = determineDockerfileType(instructions.getFromImage() ?: "Unknown")
+            createMetadataFile(dockerfileName, filePath, dockerfileType)
         } else {
             throw IllegalArgumentException("Either parameters or filePath must be provided")
         }

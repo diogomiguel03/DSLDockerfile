@@ -5,8 +5,10 @@ import org.example.DSL.Instructions.*
 
 class InstructionsDockerfile {
     private val instructions = mutableListOf<DockerInstruction>()
+    private var fromImage: String? = null
 
     fun from(image: String, tag: String? = "latest"): String {
+        fromImage = image
         return addInstruction(From(image, tag ?: "latest"))
     }
 
@@ -82,5 +84,9 @@ class InstructionsDockerfile {
 
     fun build(): String {
         return instructions.joinToString("\n") { it.generate() }
+    }
+
+    fun getFromImage(): String? {
+        return fromImage
     }
 }
