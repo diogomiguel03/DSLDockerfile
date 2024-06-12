@@ -128,6 +128,14 @@ class DockerfileController {
         }
     }
 
+    fun loadDockerfile(file: File): String {
+        return file.readText()
+    }
+
+    fun saveDockerfile(filePath: String, content: String) {
+        File(filePath).writeText(content)
+    }
+
     private fun generate(filePath: String) {
         val content = instructions.build()
         File(filePath).writeText(content)

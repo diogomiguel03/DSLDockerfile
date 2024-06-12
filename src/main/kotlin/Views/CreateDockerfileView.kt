@@ -18,6 +18,12 @@ class CreateDockerfileView : View("Create Dockerfile") {
             }
         }
 
+        button("Edit Dockerfile") {
+            action {
+                replaceWith<EditDockerfileView>()
+            }
+        }
+
         button("Back") {
             action {
                 replaceWith<MainMenu>()

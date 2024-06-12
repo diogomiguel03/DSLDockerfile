@@ -3,11 +3,7 @@ package org.example
 
 import javafx.application.Platform
 import javafx.geometry.Pos
-import org.example.Views.ContainerManagementView
-import org.example.Views.CreateDockerImageView
-import org.example.Views.CreateDockerfileView
-import org.example.Views.DockerComposeView
-import org.example.Views.MetadataView
+import org.example.Views.*
 import tornadofx.*
 
 class MainMenu : View("Main Menu") {
@@ -28,6 +24,23 @@ class MainMenu : View("Main Menu") {
                 button("Create Dockerfile") {
                     action {
                         replaceWith<CreateDockerfileView>()
+                    }
+                    style {
+                        backgroundColor += c("#bde0fe")
+                        textFill = c("#000000") // black text
+                        fontSize = 16.px
+                        padding = box(15.px, 30.px)
+                        borderRadius += box(15.px)
+                        borderColor += box(c("#bde0fe"))
+                        borderWidth += box(2.px)
+                        minWidth = 150.px
+                        alignment = Pos.CENTER
+                    }
+                }
+
+                button("Edit Dockerfile") {
+                    action {
+                        replaceWith<EditDockerfileView>()
                     }
                     style {
                         backgroundColor += c("#bde0fe")
