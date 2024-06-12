@@ -27,6 +27,11 @@ dependencies {
     implementation("com.typesafe:config:1.4.2")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.14.0")
     implementation("org.slf4j:slf4j-api:1.7.32")
+
+    testImplementation("org.junit.jupiter:junit-jupiter:5.9.1")
+    testImplementation("org.mockito:mockito-core:4.8.0")
+    testImplementation("org.mockito:mockito-inline:4.8.0")
+    testImplementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.14.0")
 }
 
 tasks.test {
