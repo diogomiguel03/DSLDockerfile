@@ -29,7 +29,7 @@ class ContainerController {
         return runCommand(args).second
     }
 
-    fun runContainer(container: Container): Boolean {
+    fun runContainer(container: Container, metadataDirectory: String): Boolean {
         val portArgs = container.ports.get().split(",").filter { it.isNotBlank() }.flatMap { listOf("-p", it) }
         val envArgs = container.envVars.get().split(",").filter { it.isNotBlank() }.flatMap { listOf("-e", it) }
         val volumeArgs = container.volumes.get().split(",").filter { it.isNotBlank() }.flatMap { listOf("-v", it) }
@@ -40,7 +40,7 @@ class ContainerController {
         val (success, output) = runCommand(args)
         if (success) {
             outputLog.set("Container started successfully: ${output.joinToString("\n")}")
-            updateMetadataWithContainer(container, fullImageName)
+            updateMetadataWithContainer(container, fullImageName, metadataDirectory)
         } else {
             outputLog.set("Error output: ${output.joinToString("\n")}")
             logger.error { "Error output: ${output.joinToString("\n")}" }
@@ -86,10 +86,9 @@ class ContainerController {
         return runCommand(args).second
     }
 
-    private fun updateMetadataWithContainer(container: Container, fullImageName: String) {
+    private fun updateMetadataWithContainer(container: Container, fullImageName: String, metadataDirectory: String) {
         try {
-            val currentDirectory = File(".")
-            val metadataFiles = currentDirectory.walk()
+            val metadataFiles = File(metadataDirectory).walk()
                 .filter { it.isFile && it.name == "metadata-info.json" }
                 .toList()
 

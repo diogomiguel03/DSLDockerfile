@@ -6,6 +6,7 @@ import javafx.collections.FXCollections
 import javafx.scene.control.Alert
 import javafx.scene.control.TextArea
 import javafx.scene.text.FontWeight
+import javafx.stage.DirectoryChooser
 import org.example.Controllers.ContainerController
 import org.example.Models.Container
 import org.example.MainMenu
@@ -112,11 +113,19 @@ class ContainerManagementView : View("Container Management") {
                 if (containerModel.name.get().isNullOrEmpty()) {
                     alert(Alert.AlertType.WARNING, "Warning", "Please provide a container name.")
                 } else {
-                    val success = controller.runContainer(containerModel)
-                    if (success) {
-                        alert(Alert.AlertType.INFORMATION, "Success", "Container started successfully.")
+                    val directoryChooser = DirectoryChooser()
+                    directoryChooser.title = "Select Metadata Directory"
+                    val selectedDir = directoryChooser.showDialog(null)
+                    if (selectedDir != null) {
+                        val metadataDirectory = selectedDir.absolutePath
+                        val success = controller.runContainer(containerModel, metadataDirectory)
+                        if (success) {
+                            alert(Alert.AlertType.INFORMATION, "Success", "Container started successfully.")
+                        } else {
+                            alert(Alert.AlertType.ERROR, "Error", controller.outputLog.get())
+                        }
                     } else {
-                        alert(Alert.AlertType.ERROR, "Error", controller.outputLog.get())
+                        alert(Alert.AlertType.WARNING, "Warning", "Please select a metadata directory.")
                     }
                 }
             }
