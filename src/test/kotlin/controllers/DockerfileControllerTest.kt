@@ -1,3 +1,4 @@
+// File: DockerfileControllerTest.kt
 package org.example.Controllers
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -56,5 +57,46 @@ class DockerfileControllerTest {
         val objectMapper = jacksonObjectMapper()
         val metadataContent: Metadata = objectMapper.readValue(metadata)
         assertEquals("Python", metadataContent.dockerfileType, "Dockerfile type should be recognized as Python")
+    }
+
+    @Test
+    fun `test createDefaultDockerfile`() {
+        val dockerfilePath = File(tempDir, "Dockerfile").absolutePath
+        val metadataPath = File(tempDir, "metadata-info.json").absolutePath
+
+        controller.createDefaultDockerfile(
+            image = "openjdk",
+            tag = "11-jre-slim",
+            updateCommand = "apt-get update",
+            installCommand = "apt-get install -y maven",
+            workdirPath = "/app",
+            copySource = ".",
+            copyDestination = "/app",
+            compileCommand = "mvn clean install",
+            cmdCommand = "java -jar app.jar",
+            filePath = dockerfilePath
+        )
+
+        val dockerfile = File(dockerfilePath)
+        assertTrue(dockerfile.exists(), "Dockerfile should be created")
+
+        val expectedContent = """
+            FROM openjdk:11-jre-slim
+            RUN apt-get update
+            RUN apt-get install -y maven
+            WORKDIR /app
+            COPY . /app
+            RUN mvn clean install
+            CMD java -jar app.jar
+        """.trimIndent()
+
+        assertEquals(expectedContent, dockerfile.readText().trim(), "Dockerfile content should match expected content")
+
+        val metadata = File(metadataPath)
+        assertTrue(metadata.exists(), "Metadata file should be created")
+
+        val objectMapper = jacksonObjectMapper()
+        val metadataContent: Metadata = objectMapper.readValue(metadata)
+        assertEquals("Java", metadataContent.dockerfileType, "Dockerfile type should be recognized as Java")
     }
 }
