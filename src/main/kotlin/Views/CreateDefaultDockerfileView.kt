@@ -1,4 +1,3 @@
-// File: CreateDefaultDockerfileView.kt
 package org.example.Views
 
 import javafx.stage.FileChooser

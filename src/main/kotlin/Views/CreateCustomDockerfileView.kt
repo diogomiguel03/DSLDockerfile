@@ -1,4 +1,3 @@
-// File: CreateCustomDockerfileView.kt
 package org.example.Views
 
 import javafx.beans.property.SimpleStringProperty
@@ -37,12 +36,46 @@ class CreateCustomDockerfileView : View("Create Custom Dockerfile") {
             spacing = 10.0
             button("Add Instruction") {
                 action {
-                    addInstruction()
+                    val instruction = selectedInstruction.value
+                    val parameters = parameterField.value
+                    if (instruction != null && parameters.isNotEmpty()) {
+                        try {
+                            controller.createCustomDockerfile(instruction, parameters)
+                            parameterField.set("")
+                            alert(Alert.AlertType.INFORMATION, "Success", "Instruction added: $instruction $parameters")
+                        } catch (e: Exception) {
+                            alert(Alert.AlertType.ERROR, "Error", e.message ?: "Unknown error")
+                        }
+                    } else {
+                        alert(Alert.AlertType.WARNING, "Warning", "Please select an instruction and enter parameters")
+                    }
                 }
             }
             button("Generate Dockerfile") {
                 action {
-                    generateDockerfile()
+                    val fileChooser = FileChooser()
+                    fileChooser.title = "Save Dockerfile"
+                    fileChooser.initialFileName = "Dockerfile"
+                    fileChooser.extensionFilters.addAll(
+                        FileChooser.ExtensionFilter("Dockerfile", "*.*")
+                    )
+                    val selectedFile = fileChooser.showSaveDialog(null)
+                    if (selectedFile != null) {
+                        try {
+                            val filePath = selectedFile.absolutePath
+                            controller.createCustomDockerfile(instruction = "", filePath = filePath)
+                            alert(Alert.AlertType.INFORMATION, "Success", "Dockerfile created at $filePath")
+
+                            // Reset the preview content
+                            controller.previewContent.set("")
+
+                            replaceWith<CreateDockerfileView>()
+                        } catch (e: Exception) {
+                            alert(Alert.AlertType.ERROR, "Error", "Failed to generate Dockerfile: ${e.message}")
+                        }
+                    } else {
+                        alert(Alert.AlertType.WARNING, "Warning", "File not selected")
+                    }
                 }
             }
         }
@@ -62,48 +95,6 @@ class CreateCustomDockerfileView : View("Create Custom Dockerfile") {
             action {
                 replaceWith<CreateDockerfileView>()
             }
-        }
-    }
-
-    private fun addInstruction() {
-        val instruction = selectedInstruction.value
-        val parameters = parameterField.value
-        if (instruction != null && parameters.isNotEmpty()) {
-            try {
-                controller.createCustomDockerfile(instruction, parameters)
-                parameterField.set("")
-                alert(Alert.AlertType.INFORMATION, "Success", "Instruction added: $instruction $parameters")
-            } catch (e: Exception) {
-                alert(Alert.AlertType.ERROR, "Error", e.message ?: "Unknown error")
-            }
-        } else {
-            alert(Alert.AlertType.WARNING, "Warning", "Please select an instruction and enter parameters")
-        }
-    }
-
-    private fun generateDockerfile() {
-        val fileChooser = FileChooser()
-        fileChooser.title = "Save Dockerfile"
-        fileChooser.initialFileName = "Dockerfile"
-        fileChooser.extensionFilters.addAll(
-            FileChooser.ExtensionFilter("Dockerfile", "*.*")
-        )
-        val selectedFile = fileChooser.showSaveDialog(null)
-        if (selectedFile != null) {
-            try {
-                val filePath = selectedFile.absolutePath
-                controller.createCustomDockerfile(instruction = "", filePath = filePath)
-                alert(Alert.AlertType.INFORMATION, "Success", "Dockerfile created at $filePath")
-
-                // Reset controller for the next creation
-                controller.resetInstructions()
-
-                replaceWith<CreateDockerfileView>()
-            } catch (e: Exception) {
-                alert(Alert.AlertType.ERROR, "Error", "Failed to generate Dockerfile: ${e.message}")
-            }
-        } else {
-            alert(Alert.AlertType.WARNING, "Warning", "File not selected")
         }
     }
 }

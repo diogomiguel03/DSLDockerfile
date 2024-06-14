@@ -3,16 +3,20 @@ package org.example.Controllers
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import javafx.beans.property.SimpleStringProperty
 import javafx.scene.control.Alert
-import org.example.DSL.InstructionsDockerfile
+import mu.KotlinLogging
+import org.example.DSL.DockerfileDSL
+import org.example.DSL.dockerfile
 import org.example.Models.Metadata
 import tornadofx.*
 import java.io.File
 import java.time.Instant
 
+private val logger = KotlinLogging.logger {}
+
 class DockerfileController {
-    private var instructions = InstructionsDockerfile()
     val previewContent = SimpleStringProperty()
     private val objectMapper = jacksonObjectMapper()
+    private val dsl = DockerfileDSL()
 
     fun createDefaultDockerfile(
         image: String,
@@ -26,14 +30,17 @@ class DockerfileController {
         cmdCommand: String,
         filePath: String
     ) {
-        instructions.from(image, tag)
-        instructions.run(updateCommand)
-        instructions.run(installCommand)
-        instructions.workdir(workdirPath)
-        instructions.copy(copySource, copyDestination)
-        instructions.run(compileCommand)
-        instructions.cmd(cmdCommand)
-        generate(filePath)
+        dsl.apply {
+            from(image, tag)
+            run(updateCommand)
+            run(installCommand)
+            workdir(workdirPath)
+            copy(copySource, copyDestination)
+            run(compileCommand)
+            cmd(cmdCommand)
+        }
+        logger.info { "Generating Dockerfile at $filePath with instructions: ${dsl.build()}" }
+        dsl.saveToFile(filePath)
 
         val dockerfileName = File(filePath).nameWithoutExtension
         val dockerfileType = determineDockerfileType(image)
@@ -50,13 +57,6 @@ class DockerfileController {
             image.contains("ruby", ignoreCase = true) -> "Ruby"
             image.contains("php", ignoreCase = true) -> "PHP"
             image.contains("nginx", ignoreCase = true) -> "Nginx"
-            image.startsWith("python", ignoreCase = true) -> "Python"
-            image.startsWith("node", ignoreCase = true) -> "Node.js"
-            image.startsWith("openjdk", ignoreCase = true) -> "Java"
-            image.startsWith("golang", ignoreCase = true) -> "Go"
-            image.startsWith("ruby", ignoreCase = true) -> "Ruby"
-            image.startsWith("php", ignoreCase = true) -> "PHP"
-            image.startsWith("nginx", ignoreCase = true) -> "Nginx"
             else -> "Unknown"
         }
     }
@@ -75,54 +75,55 @@ class DockerfileController {
     fun createCustomDockerfile(instruction: String, parameters: String? = null, filePath: String? = null) {
         if (parameters != null) {
             // Add instruction
+            logger.info { "Adding instruction: $instruction with parameters: $parameters" }
             when (instruction) {
                 "FROM" -> {
                     val parts = parameters.split(" ")
                     val image = parts[0]
-                    val tag = if (parts.size > 1) parts[1] else null
-                    instructions.from(image, tag)
+                    val tag = if (parts.size > 1) parts[1] else "latest"
+                    dsl.from(image, tag)
                 }
                 "ADD" -> {
                     val (source, destination) = parameters.split(" ")
-                    instructions.add(source, destination)
+                    dsl.add(source, destination)
                 }
                 "ARG" -> {
                     val (name, defaultValue) = parameters.split(" ")
-                    instructions.arg(name, defaultValue)
+                    dsl.arg(name, defaultValue)
                 }
-                "CMD" -> instructions.cmd(parameters)
-                "ENTRYPOINT" -> instructions.entrypoint(parameters)
+                "CMD" -> dsl.cmd(parameters)
+                "ENTRYPOINT" -> dsl.entrypoint(parameters)
                 "ENV" -> {
                     val (key, value) = parameters.split(" ")
-                    instructions.env(key, value)
+                    dsl.env(key, value)
                 }
-                "EXPOSE" -> instructions.expose(parameters.toInt())
-                "HEALTHCHECK" -> instructions.healthcheck(parameters)
+                "EXPOSE" -> dsl.expose(parameters.toInt())
+                "HEALTHCHECK" -> dsl.healthcheck(parameters)
                 "LABEL" -> {
                     val (key, value) = parameters.split(" ")
-                    instructions.label(key, value)
+                    dsl.label(key, value)
                 }
-                "MAINTAINER" -> instructions.maintainer(parameters)
-                "RUN" -> instructions.run(parameters)
-                "SHELL" -> instructions.shell(parameters)
-                "STOPSIGNAL" -> instructions.stopsignal(parameters)
-                "USER" -> instructions.user(parameters)
-                "VOLUME" -> instructions.volume(parameters)
-                "WORKDIR" -> instructions.workdir(parameters)
+                "MAINTAINER" -> dsl.maintainer(parameters)
+                "RUN" -> dsl.run(parameters)
+                "SHELL" -> dsl.shell(parameters)
+                "STOPSIGNAL" -> dsl.stopsignal(parameters)
+                "USER" -> dsl.user(parameters)
+                "VOLUME" -> dsl.volume(parameters)
+                "WORKDIR" -> dsl.workdir(parameters)
                 "COPY" -> {
                     val (source, destination) = parameters.split(" ")
-                    instructions.copy(source, destination)
+                    dsl.copy(source, destination)
                 }
                 else -> throw IllegalArgumentException("Unsupported instruction: $instruction")
             }
             updatePreview()
         } else if (filePath != null) {
             // Generate Dockerfile
-            val content = instructions.build()
-            File(filePath).writeText(content)
+            logger.info { "Generating Dockerfile at $filePath with instructions: ${dsl.build()}" }
+            dsl.saveToFile(filePath)
 
             val dockerfileName = File(filePath).nameWithoutExtension
-            val dockerfileType = determineDockerfileType(instructions.getFromImage() ?: "Unknown")
+            val dockerfileType = determineDockerfileType(dsl.getFromImage() ?: "Unknown")
             createMetadataFile(dockerfileName, filePath, dockerfileType)
         } else {
             throw IllegalArgumentException("Either parameters or filePath must be provided")
@@ -154,18 +155,9 @@ class DockerfileController {
         File(filePath).writeText(content)
     }
 
-    private fun generate(filePath: String) {
-        val content = instructions.build()
-        File(filePath).writeText(content)
-    }
-
-    // Method to update the preview content
     private fun updatePreview() {
-        val dockerfileContent = instructions.build()
+        val dockerfileContent = dsl.build()
         previewContent.set(dockerfileContent)
     }
 
-    fun resetInstructions() {
-        instructions = InstructionsDockerfile()
-    }
 }
