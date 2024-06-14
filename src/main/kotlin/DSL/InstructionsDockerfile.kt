@@ -89,4 +89,8 @@ class InstructionsDockerfile {
     fun getFromImage(): String? {
         return fromImage
     }
+
+    fun getInstructions(): List<DockerInstruction> {
+        return instructions
+    }
 }

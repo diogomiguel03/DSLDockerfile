@@ -33,7 +33,7 @@ class EditDockerfileView : View("Edit Dockerfile") {
                     val selectedFile = fileChooser.showOpenDialog(null)
                     if (selectedFile != null) {
                         selectedFilePath.set(selectedFile.absolutePath)
-                        loadDockerfile(selectedFile)
+                        controller.loadDockerfile(selectedFile, dockerfileContent)
                     }
                 }
             }
@@ -54,7 +54,7 @@ class EditDockerfileView : View("Edit Dockerfile") {
             spacing = 10.0
             button("Save Changes") {
                 action {
-                    saveChanges()
+                    controller.saveChanges(selectedFilePath, dockerfileContent)
                 }
             }
             button("Back") {
@@ -62,27 +62,6 @@ class EditDockerfileView : View("Edit Dockerfile") {
                     replaceWith<MainMenu>()
                 }
             }
-        }
-    }
-
-    private fun loadDockerfile(file: File) {
-        val content = controller.loadDockerfile(file)
-        dockerfileContent.set(content)
-    }
-
-    private fun saveChanges() {
-        val filePath = selectedFilePath.get()
-        if (filePath.isNullOrEmpty()) {
-            alert(Alert.AlertType.WARNING, "Warning", "Please select a Dockerfile.")
-            return
-        }
-
-        val content = dockerfileContent.get()
-        try {
-            controller.saveDockerfile(filePath, content)
-            alert(Alert.AlertType.INFORMATION, "Success", "Dockerfile saved successfully.")
-        } catch (e: Exception) {
-            alert(Alert.AlertType.ERROR, "Error", "Failed to save Dockerfile: ${e.message}")
         }
     }
 }

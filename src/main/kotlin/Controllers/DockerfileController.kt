@@ -1,10 +1,11 @@
-// File: DockerfileController.kt
 package org.example.Controllers
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import javafx.beans.property.SimpleStringProperty
+import javafx.scene.control.Alert
 import org.example.DSL.InstructionsDockerfile
 import org.example.Models.Metadata
+import tornadofx.*
 import java.io.File
 import java.time.Instant
 
@@ -128,8 +129,25 @@ class DockerfileController {
         }
     }
 
-    fun loadDockerfile(file: File): String {
-        return file.readText()
+    fun loadDockerfile(file: File, dockerfileContent: SimpleStringProperty) {
+        val content = file.readText()
+        dockerfileContent.set(content)
+    }
+
+    fun saveChanges(filePath: SimpleStringProperty, dockerfileContent: SimpleStringProperty) {
+        val path = filePath.get()
+        if (path.isNullOrEmpty()) {
+            alert(Alert.AlertType.WARNING, "Warning", "Please select a Dockerfile.")
+            return
+        }
+
+        val content = dockerfileContent.get()
+        try {
+            File(path).writeText(content)
+            alert(Alert.AlertType.INFORMATION, "Success", "Dockerfile saved successfully.")
+        } catch (e: Exception) {
+            alert(Alert.AlertType.ERROR, "Error", "Failed to save Dockerfile: ${e.message}")
+        }
     }
 
     fun saveDockerfile(filePath: String, content: String) {

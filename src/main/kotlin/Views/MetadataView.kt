@@ -1,24 +1,16 @@
 // File: MetadataView.kt
 package org.example.Views
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
-import javafx.beans.property.SimpleStringProperty
 import javafx.scene.control.Alert
-import javafx.scene.layout.VBox
 import javafx.scene.text.Text
 import javafx.stage.DirectoryChooser
+import org.example.Controllers.MetadataController
 import org.example.MainMenu
-import org.example.Models.Metadata
 import tornadofx.*
 import java.io.File
 
 class MetadataView : View("Metadata Viewer") {
-    private val selectedDirectory = SimpleStringProperty()
-    private val metadataContent = VBox().apply {
-        spacing = 10.0
-        paddingAll = 20.0
-    }
+    private val controller = MetadataController()
 
     override val root = vbox {
         spacing = 10.0
@@ -30,8 +22,8 @@ class MetadataView : View("Metadata Viewer") {
                 directoryChooser.title = "Select Directory"
                 val selectedDir = directoryChooser.showDialog(null)
                 if (selectedDir != null) {
-                    selectedDirectory.set(selectedDir.absolutePath)
-                    findAndDisplayMetadataFiles(selectedDir)
+                    controller.selectedDirectory.set(selectedDir.absolutePath)
+                    controller.findAndDisplayMetadataFiles(selectedDir)
                 } else {
                     alert(Alert.AlertType.WARNING, "Warning", "No directory selected.")
                 }
@@ -39,14 +31,14 @@ class MetadataView : View("Metadata Viewer") {
         }
 
         label("Selected Directory:")
-        textfield(selectedDirectory) {
+        textfield(controller.selectedDirectory) {
             isEditable = false
             prefWidth = 400.0
         }
 
         label("Metadata Content:")
         scrollpane {
-            content = metadataContent
+            content = controller.metadataContent
         }
 
         button("Back") {
@@ -54,29 +46,5 @@ class MetadataView : View("Metadata Viewer") {
                 replaceWith<MainMenu>()
             }
         }
-    }
-
-    private fun findAndDisplayMetadataFiles(directory: File) {
-        val metadataFiles = directory.walk()
-            .filter { it.isFile && it.name == "metadata-info.json" }
-            .toList()
-
-        if (metadataFiles.isEmpty()) {
-            metadataContent.clear()
-            metadataContent.add(Text("No metadata files found in the selected directory."))
-            return
-        }
-
-        metadataContent.clear()
-        for (file in metadataFiles) {
-            val metadata = parseMetadataFile(file)
-            val metadataPane = MetadataEntryPane(metadata)
-            metadataContent.add(metadataPane)
-        }
-    }
-
-    private fun parseMetadataFile(file: File): Metadata {
-        val objectMapper = jacksonObjectMapper()
-        return objectMapper.readValue(file, Metadata::class.java)
     }
 }

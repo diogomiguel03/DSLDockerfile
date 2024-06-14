@@ -10,5 +10,5 @@ data class Metadata @JsonCreator constructor(
     @JsonProperty("dockerfilePath") val dockerfilePath: String,
     @JsonProperty("imageNames") val imageNames: MutableList<String> = mutableListOf(),
     @JsonProperty("containers") val containers: MutableList<String> = mutableListOf(),
-    @JsonProperty("dockerfileType") val dockerfileType: String? = null // Add this line to handle Dockerfile type
+    @JsonProperty("dockerfileType") val dockerfileType: String? = null
 )
