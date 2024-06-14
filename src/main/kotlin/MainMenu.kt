@@ -89,23 +89,6 @@ class MainMenu : View("Main Menu") {
                     }
                 }
 
-                button("Create Docker Compose") {
-                    action {
-                        replaceWith<DockerComposeView>()
-                    }
-                    style {
-                        backgroundColor += c("#bde0fe")
-                        textFill = c("#000000") // black text
-                        fontSize = 16.px
-                        padding = box(15.px, 30.px)
-                        borderRadius += box(15.px)
-                        borderColor += box(c("#bde0fe"))
-                        borderWidth += box(2.px)
-                        minWidth = 150.px
-                        alignment = Pos.CENTER
-                    }
-                }
-
                 button("View Metadata") {
                     action {
                         replaceWith<MetadataView>()

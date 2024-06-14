@@ -1,18 +1,14 @@
-// File: CreateDockerImageView.kt
 package org.example.Views
 
-import javafx.beans.property.SimpleStringProperty
 import javafx.scene.control.Alert
 import javafx.scene.text.FontWeight
 import javafx.stage.FileChooser
 import org.example.Controllers.DockerImageController
-import org.example.Models.DockerImage
 import org.example.MainMenu
 import tornadofx.*
 
 class CreateDockerImageView : View("Create Docker Image") {
-    private val model = DockerImage()
-    private val controller = DockerImageController(model)
+    private val controller = DockerImageController()
 
     override val root = vbox {
         paddingAll = 20
@@ -27,7 +23,7 @@ class CreateDockerImageView : View("Create Docker Image") {
 
         hbox {
             spacing = 10.0
-            textfield(model.dockerfilePath) {
+            textfield(controller.dockerfilePath) {
                 promptText = "Path to Dockerfile"
                 prefWidth = 300.0
             }
@@ -37,32 +33,35 @@ class CreateDockerImageView : View("Create Docker Image") {
                     fileChooser.title = "Select Dockerfile"
                     val selectedFile = fileChooser.showOpenDialog(null)
                     if (selectedFile != null) {
-                        model.dockerfilePath.set(selectedFile.absolutePath)
+                        controller.dockerfilePath.set(selectedFile.absolutePath)
                     }
                 }
             }
         }
 
-        textfield(model.imageName) {
+        textfield(controller.imageName) {
             promptText = "Docker Image Name"
             prefWidth = 300.0
         }
 
-        textfield(model.imageTag) {
+        textfield(controller.imageTag) {
             promptText = "Docker Image Tag (default: latest)"
             prefWidth = 300.0
         }
 
         button("Create Image") {
             action {
-                if (model.dockerfilePath.get().isNullOrEmpty() || model.imageName.get().isNullOrEmpty()) {
+                if (controller.dockerfilePath.get().isNullOrEmpty() || controller.imageName.get().isNullOrEmpty()) {
                     alert(Alert.AlertType.WARNING, "Warning", "Please provide both Dockerfile path and image name.")
                 } else {
-                    val success = controller.createDockerImage()
-                    if (success) {
-                        alert(Alert.AlertType.INFORMATION, "Success", "Docker image created successfully.")
-                    } else {
-                        alert(Alert.AlertType.ERROR, "Error", controller.outputLog.get())
+                    controller.createDockerImage { success ->
+                        runLater {
+                            if (success) {
+                                alert(Alert.AlertType.INFORMATION, "Success", "Docker image created successfully.")
+                            } else {
+                                alert(Alert.AlertType.ERROR, "Error", controller.outputLog.get())
+                            }
+                        }
                     }
                 }
             }

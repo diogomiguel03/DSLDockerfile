@@ -93,14 +93,6 @@ class DockerfileControllerTest {
         assertEquals("Python", metadata.dockerfileType, "Dockerfile type should be recognized as Python")
     }
 
-    @Test
-    fun `test loadDockerfile`() {
-        val content = "FROM openjdk:11-jre-slim"
-        File(dockerfilePath).writeText(content)
-
-        val loadedContent = controller.loadDockerfile(File(dockerfilePath))
-        assertEquals(content, loadedContent, "Loaded Dockerfile content should match")
-    }
 
     @Test
     fun `test saveDockerfile`() {

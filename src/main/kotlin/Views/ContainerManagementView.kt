@@ -1,4 +1,3 @@
-// File: ContainerManagementView.kt
 package org.example.Views
 
 import javafx.beans.property.SimpleStringProperty
@@ -8,13 +7,11 @@ import javafx.scene.control.TextArea
 import javafx.scene.text.FontWeight
 import javafx.stage.DirectoryChooser
 import org.example.Controllers.ContainerController
-import org.example.Models.Container
 import org.example.MainMenu
 import tornadofx.*
 
 class ContainerManagementView : View("Container Management") {
     private val controller = ContainerController()
-    private val containerModel = Container()
     private val availableImages = FXCollections.observableArrayList<String>()
     private val selectedImage = SimpleStringProperty()
     private val availableContainers = FXCollections.observableArrayList<String>()
@@ -67,7 +64,7 @@ class ContainerManagementView : View("Container Management") {
             }
         }
 
-        textfield(containerModel.name) {
+        textfield(controller.name) {
             promptText = "Container Name"
             prefWidth = 300.0
         }
@@ -90,17 +87,17 @@ class ContainerManagementView : View("Container Management") {
             }
         }
 
-        textfield(containerModel.ports) {
+        textfield(controller.ports) {
             promptText = "Ports (optional, format: hostPort:containerPort,...)"
             prefWidth = 300.0
         }
 
-        textfield(containerModel.envVars) {
+        textfield(controller.envVars) {
             promptText = "Environment Variables (optional, format: KEY=VALUE,...)"
             prefWidth = 300.0
         }
 
-        textfield(containerModel.volumes) {
+        textfield(controller.volumes) {
             promptText = "Volumes (optional, format: hostPath:containerPath,...)"
             prefWidth = 300.0
         }
@@ -108,9 +105,9 @@ class ContainerManagementView : View("Container Management") {
         button("Run Container") {
             action {
                 val imageParts = selectedImage.get().split(":")
-                containerModel.imageName.set(imageParts[0])
-                containerModel.imageTag.set(if (imageParts.size > 1) imageParts[1] else "latest")
-                if (containerModel.name.get().isNullOrEmpty()) {
+                controller.imageName.set(imageParts[0])
+                controller.imageTag.set(if (imageParts.size > 1) imageParts[1] else "latest")
+                if (controller.name.get().isNullOrEmpty()) {
                     alert(Alert.AlertType.WARNING, "Warning", "Please provide a container name.")
                 } else {
                     val directoryChooser = DirectoryChooser()
@@ -118,11 +115,14 @@ class ContainerManagementView : View("Container Management") {
                     val selectedDir = directoryChooser.showDialog(null)
                     if (selectedDir != null) {
                         val metadataDirectory = selectedDir.absolutePath
-                        val success = controller.runContainer(containerModel, metadataDirectory)
-                        if (success) {
-                            alert(Alert.AlertType.INFORMATION, "Success", "Container started successfully.")
-                        } else {
-                            alert(Alert.AlertType.ERROR, "Error", controller.outputLog.get())
+                        controller.runContainer(metadataDirectory) { success ->
+                            runLater {
+                                if (success) {
+                                    alert(Alert.AlertType.INFORMATION, "Success", "Container started successfully.")
+                                } else {
+                                    alert(Alert.AlertType.ERROR, "Error", controller.outputLog.get())
+                                }
+                            }
                         }
                     } else {
                         alert(Alert.AlertType.WARNING, "Warning", "Please select a metadata directory.")
