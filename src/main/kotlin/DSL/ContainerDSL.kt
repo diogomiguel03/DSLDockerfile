@@ -10,10 +10,6 @@ class ContainerDSL {
     val envVars = SimpleStringProperty("")
     val volumes = SimpleStringProperty("")
 
-    fun fromDockerfile(path: String) {
-        // This function can be removed if it's not used in the DSL context
-    }
-
     fun name(containerName: String) {
         name.set(containerName)
     }

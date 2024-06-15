@@ -6,6 +6,8 @@ import javafx.scene.control.Alert
 import mu.KotlinLogging
 import org.example.DSL.DockerfileDSL
 import org.example.DSL.MetadataDSL
+import org.example.DSL.dockerfile
+import org.example.DSL.metadata
 import tornadofx.*
 import java.io.File
 import java.time.Instant
@@ -15,7 +17,7 @@ private val logger = KotlinLogging.logger {}
 class DockerfileController {
     val previewContent = SimpleStringProperty()
     private val objectMapper = jacksonObjectMapper()
-    private val dsl = DockerfileDSL()
+    private val instructionList = mutableListOf<Pair<String, String>>()  // Lista para armazenar instruções temporariamente
 
     fun createDefaultDockerfile(
         image: String,
@@ -29,7 +31,7 @@ class DockerfileController {
         cmdCommand: String,
         filePath: String
     ) {
-        dsl.apply {
+        val dsl = dockerfile {
             from(image, tag)
             run(updateCommand)
             run(installCommand)
@@ -61,12 +63,12 @@ class DockerfileController {
     }
 
     private fun createMetadataFile(dockerfileName: String, filePath: String, dockerfileType: String) {
-        val metadata = MetadataDSL().apply {
+        val metadata = metadata {
             name = dockerfileName
             timestamp = Instant.now().toString()
             this.dockerfilePath = filePath
             this.dockerfileType = dockerfileType
-        }.build()
+        }
 
         val metadataFile = File(File(filePath).parent, "metadata-info.json")
         MetadataDSL.saveToFile(metadataFile.absolutePath, metadata)
@@ -74,51 +76,54 @@ class DockerfileController {
 
     fun createCustomDockerfile(instruction: String, parameters: String? = null, filePath: String? = null) {
         if (parameters != null) {
-            // Add instruction
             logger.info { "Adding instruction: $instruction with parameters: $parameters" }
-            when (instruction) {
-                "FROM" -> {
-                    val parts = parameters.split(" ")
-                    val image = parts[0]
-                    val tag = if (parts.size > 1) parts[1] else "latest"
-                    dsl.from(image, tag)
-                }
-                "ADD" -> {
-                    val (source, destination) = parameters.split(" ")
-                    dsl.add(source, destination)
-                }
-                "ARG" -> {
-                    val (name, defaultValue) = parameters.split(" ")
-                    dsl.arg(name, defaultValue)
-                }
-                "CMD" -> dsl.cmd(parameters)
-                "ENTRYPOINT" -> dsl.entrypoint(parameters)
-                "ENV" -> {
-                    val (key, value) = parameters.split(" ")
-                    dsl.env(key, value)
-                }
-                "EXPOSE" -> dsl.expose(parameters.toInt())
-                "HEALTHCHECK" -> dsl.healthcheck(parameters)
-                "LABEL" -> {
-                    val (key, value) = parameters.split(" ")
-                    dsl.label(key, value)
-                }
-                "MAINTAINER" -> dsl.maintainer(parameters)
-                "RUN" -> dsl.run(parameters)
-                "SHELL" -> dsl.shell(parameters)
-                "STOPSIGNAL" -> dsl.stopsignal(parameters)
-                "USER" -> dsl.user(parameters)
-                "VOLUME" -> dsl.volume(parameters)
-                "WORKDIR" -> dsl.workdir(parameters)
-                "COPY" -> {
-                    val (source, destination) = parameters.split(" ")
-                    dsl.copy(source, destination)
-                }
-                else -> throw IllegalArgumentException("Unsupported instruction: $instruction")
-            }
+            instructionList.add(instruction to parameters)
             updatePreview()
         } else if (filePath != null) {
-            // Generate Dockerfile
+            val dsl = dockerfile {
+                instructionList.forEach { (instr, params) ->
+                    when (instr) {
+                        "FROM" -> {
+                            val parts = params.split(" ")
+                            val image = parts[0]
+                            val tag = if (parts.size > 1) parts[1] else "latest"
+                            from(image, tag)
+                        }
+                        "ADD" -> {
+                            val (source, destination) = params.split(" ")
+                            add(source, destination)
+                        }
+                        "ARG" -> {
+                            val (name, defaultValue) = params.split(" ")
+                            arg(name, defaultValue)
+                        }
+                        "CMD" -> cmd(params)
+                        "ENTRYPOINT" -> entrypoint(params)
+                        "ENV" -> {
+                            val (key, value) = params.split(" ")
+                            env(key, value)
+                        }
+                        "EXPOSE" -> expose(params.toInt())
+                        "HEALTHCHECK" -> healthcheck(params)
+                        "LABEL" -> {
+                            val (key, value) = params.split(" ")
+                            label(key, value)
+                        }
+                        "MAINTAINER" -> maintainer(params)
+                        "RUN" -> run(params)
+                        "SHELL" -> shell(params)
+                        "STOPSIGNAL" -> stopsignal(params)
+                        "USER" -> user(params)
+                        "VOLUME" -> volume(params)
+                        "WORKDIR" -> workdir(params)
+                        "COPY" -> {
+                            val (source, destination) = params.split(" ")
+                            copy(source, destination)
+                        }
+                        else -> throw IllegalArgumentException("Unsupported instruction: $instr")
+                    }
+                }
+            }
             logger.info { "Generating Dockerfile at $filePath with instructions: ${dsl.build()}" }
             dsl.saveToFile(filePath)
 
@@ -156,8 +161,50 @@ class DockerfileController {
     }
 
     private fun updatePreview() {
-        val dockerfileContent = dsl.build()
-        previewContent.set(dockerfileContent)
+        val dsl = dockerfile {
+            instructionList.forEach { (instr, params) ->
+                when (instr) {
+                    "FROM" -> {
+                        val parts = params.split(" ")
+                        val image = parts[0]
+                        val tag = if (parts.size > 1) parts[1] else "latest"
+                        from(image, tag)
+                    }
+                    "ADD" -> {
+                        val (source, destination) = params.split(" ")
+                        add(source, destination)
+                    }
+                    "ARG" -> {
+                        val (name, defaultValue) = params.split(" ")
+                        arg(name, defaultValue)
+                    }
+                    "CMD" -> cmd(params)
+                    "ENTRYPOINT" -> entrypoint(params)
+                    "ENV" -> {
+                        val (key, value) = params.split(" ")
+                        env(key, value)
+                    }
+                    "EXPOSE" -> expose(params.toInt())
+                    "HEALTHCHECK" -> healthcheck(params)
+                    "LABEL" -> {
+                        val (key, value) = params.split(" ")
+                        label(key, value)
+                    }
+                    "MAINTAINER" -> maintainer(params)
+                    "RUN" -> run(params)
+                    "SHELL" -> shell(params)
+                    "STOPSIGNAL" -> stopsignal(params)
+                    "USER" -> user(params)
+                    "VOLUME" -> volume(params)
+                    "WORKDIR" -> workdir(params)
+                    "COPY" -> {
+                        val (source, destination) = params.split(" ")
+                        copy(source, destination)
+                    }
+                    else -> throw IllegalArgumentException("Unsupported instruction: $instr")
+                }
+            }
+        }
+        previewContent.set(dsl.build())
     }
-
 }

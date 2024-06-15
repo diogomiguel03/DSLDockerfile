@@ -1,13 +1,10 @@
 package org.example.Controllers
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import javafx.beans.property.SimpleStringProperty
 import mu.KotlinLogging
 import org.example.Config
-import org.example.DSL.ContainerDSL
-import org.example.DSL.Metadata
-import org.example.DSL.MetadataDSL
+import org.example.DSL.*
 import org.example.DSL.container
 import org.example.Utils.CommandUtils.runCommand
 import java.io.File
@@ -97,7 +94,7 @@ class ContainerController {
                 .toList()
 
             for (metadataFile in metadataFiles) {
-                val metadata: Metadata = objectMapper.readValue(metadataFile)
+                val metadata: Metadata = MetadataDSL.parseFromFile(metadataFile)
                 if (metadata.imageNames.contains(fullImageName)) {
                     val updatedMetadata = metadata.copy(containers = (metadata.containers + containerName).toMutableList())
                     MetadataDSL.saveToFile(metadataFile.absolutePath, updatedMetadata)
@@ -105,11 +102,22 @@ class ContainerController {
                     return
                 }
             }
-            outputLog.set("No matching metadata file found for image: $fullImageName")
+
+            // Caso nenhum arquivo de metadados correspondente seja encontrado, cria um novo
+            val newMetadata = metadata {
+                name = File(metadataDirectory).nameWithoutExtension
+                timestamp = java.time.Instant.now().toString()
+                this.dockerfilePath = metadataDirectory
+                imageName(fullImageName)
+                container(containerName)
+            }
+            MetadataDSL.saveToFile("$metadataDirectory/metadata-info.json", newMetadata)
+            outputLog.set("No matching metadata file found for image: $fullImageName. New metadata file created: $metadataDirectory/metadata-info.json")
         } catch (e: Exception) {
             outputLog.set("Failed to update metadata file: ${e.message}")
         }
     }
+
 
     fun stopContainer(containerName: String): Boolean {
         val args = listOf("docker", "stop", containerName)

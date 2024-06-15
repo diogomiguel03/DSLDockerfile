@@ -1,4 +1,3 @@
-// File: From.kt
 package org.example.DSL.Instructions
 
 class From(private val image: String, private val tag: String = "latest") : DockerInstruction {

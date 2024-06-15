@@ -108,6 +108,7 @@ class DockerfileDSL {
     fun saveToFile(filePath: String) {
         File(filePath).writeText(build())
     }
+
 }
 
 fun dockerfile(init: DockerfileDSL.() -> Unit): DockerfileDSL {

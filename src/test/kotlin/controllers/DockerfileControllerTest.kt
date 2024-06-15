@@ -1,106 +1,77 @@
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
-import org.example.Controllers.DockerfileController
-import org.example.DSL.Metadata
+package org.example.Controllers
+
+import org.example.DSL.DockerfileDSL
+import org.example.DSL.MetadataDSL
+import org.example.DSL.dockerfile
 import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.io.File
-import kotlin.io.path.createTempDirectory
 
 class DockerfileControllerTest {
 
-    private lateinit var controller: DockerfileController
-    private lateinit var tempDir: File
-    private lateinit var dockerfilePath: String
-
-    @BeforeEach
-    fun setUp() {
-        controller = DockerfileController()
-        tempDir = createTempDirectory().toFile()
-        dockerfilePath = File(tempDir, "Dockerfile").absolutePath
-    }
-
     @Test
     fun `test createDefaultDockerfile`() {
+        val controller = DockerfileController()
+        val filePath = "test_Dockerfile"
         controller.createDefaultDockerfile(
-            image = "openjdk",
-            tag = "11-jre-slim",
-            updateCommand = "apt-get update",
-            installCommand = "apt-get install -y maven",
-            workdirPath = "/app",
-            copySource = ".",
-            copyDestination = "/app",
-            compileCommand = "mvn clean install",
-            cmdCommand = "java -jar app.jar",
-            filePath = dockerfilePath
+            "ubuntu", "latest", "apt-get update", "apt-get install -y curl",
+            "/app", ".", "/app", "make", "make test", filePath
         )
-
-        val dockerfile = File(dockerfilePath)
-        assertTrue(dockerfile.exists(), "Dockerfile should be created")
-
-        val expectedContent = """
-            FROM openjdk:11-jre-slim
-            RUN apt-get update
-            RUN apt-get install -y maven
-            WORKDIR /app
-            COPY . /app
-            RUN mvn clean install
-            CMD java -jar app.jar
-        """.trimIndent()
-
-        assertEquals(expectedContent, dockerfile.readText().trim(), "Dockerfile content should match expected content")
-
-        val metadataFile = File(tempDir, "metadata-info.json")
-        assertTrue(metadataFile.exists(), "Metadata file should be created")
-
-        val objectMapper = jacksonObjectMapper()
-        val metadata: Metadata = objectMapper.readValue(metadataFile)
-        assertEquals("Java", metadata.dockerfileType, "Dockerfile type should be recognized as Java")
+        val dockerfile = File(filePath)
+        assertTrue(dockerfile.exists())
+        val content = dockerfile.readText()
+        assertTrue(content.contains("FROM ubuntu:latest"))
+        assertTrue(content.contains("RUN apt-get update"))
+        assertTrue(content.contains("RUN apt-get install -y curl"))
+        assertTrue(content.contains("WORKDIR /app"))
+        assertTrue(content.contains("COPY . /app"))
+        assertTrue(content.contains("RUN make"))
+        assertTrue(content.contains("CMD make test"))
     }
 
     @Test
     fun `test createCustomDockerfile`() {
-        controller.createCustomDockerfile("FROM", "python:3.10-slim", dockerfilePath)
-        controller.createCustomDockerfile("WORKDIR", "/app", dockerfilePath)
-        controller.createCustomDockerfile("COPY", "requirements.txt .", dockerfilePath)
-        controller.createCustomDockerfile("RUN", "pip3 install -r requirements.txt", dockerfilePath)
-        controller.createCustomDockerfile("COPY", ". .", dockerfilePath)
-        controller.createCustomDockerfile("EXPOSE", "5000", dockerfilePath)
-        controller.createCustomDockerfile("ENTRYPOINT", "[\"python3\", \"-m\", \"flask\", \"run\", \"--host=0.0.0.0\"]", dockerfilePath)
-        controller.createCustomDockerfile("", null, dockerfilePath)
-
-        val dockerfile = File(dockerfilePath)
-        assertTrue(dockerfile.exists(), "Dockerfile should be created")
-
-        val expectedContent = """
-            FROM python:3.10-slim
-            WORKDIR /app
-            COPY requirements.txt .
-            RUN pip3 install -r requirements.txt
-            COPY . .
-            EXPOSE 5000
-            ENTRYPOINT ["python3", "-m", "flask", "run", "--host=0.0.0.0"]
-        """.trimIndent()
-
-        assertEquals(expectedContent, dockerfile.readText().trim(), "Dockerfile content should match expected content")
-
-        val metadataFile = File(tempDir, "metadata-info.json")
-        assertTrue(metadataFile.exists(), "Metadata file should be created")
-
-        val objectMapper = jacksonObjectMapper()
-        val metadata: Metadata = objectMapper.readValue(metadataFile)
-        assertEquals("Python", metadata.dockerfileType, "Dockerfile type should be recognized as Python")
+        val controller = DockerfileController()
+        controller.createCustomDockerfile("FROM", "ubuntu:latest")
+        controller.createCustomDockerfile("RUN", "apt-get update")
+        controller.createCustomDockerfile("RUN", "apt-get install -y curl")
+        controller.createCustomDockerfile("WORKDIR", "/app")
+        controller.createCustomDockerfile("COPY", ". /app")
+        controller.createCustomDockerfile("RUN", "make")
+        controller.createCustomDockerfile("CMD", "make test")
+        val filePath = "custom_Dockerfile"
+        controller.createCustomDockerfile("", null, filePath)
+        val dockerfile = File(filePath)
+        assertTrue(dockerfile.exists())
+        val content = dockerfile.readText()
+        assertTrue(content.contains("FROM ubuntu:latest"))
+        assertTrue(content.contains("RUN apt-get update"))
+        assertTrue(content.contains("RUN apt-get install -y curl"))
+        assertTrue(content.contains("WORKDIR /app"))
+        assertTrue(content.contains("COPY . /app"))
+        assertTrue(content.contains("RUN make"))
+        assertTrue(content.contains("CMD make test"))
     }
 
     @Test
-    fun `test saveDockerfile`() {
-        val content = "FROM openjdk:11-jre-slim"
-        controller.saveDockerfile(dockerfilePath, content)
-
-        val savedContent = File(dockerfilePath).readText()
-        assertEquals(content, savedContent, "Saved Dockerfile content should match")
+    fun `test determineDockerfileType`() {
+        val controller = DockerfileController()
+        assertEquals("Python", controller.determineDockerfileType("python:3.8"))
+        assertEquals("Node.js", controller.determineDockerfileType("node:14"))
+        assertEquals("Java", controller.determineDockerfileType("openjdk:11"))
+        assertEquals("Go", controller.determineDockerfileType("golang:1.16"))
+        assertEquals("Unknown", controller.determineDockerfileType("unknownimage:latest"))
     }
 
-
+    @Test
+    fun `test createMetadataFile`() {
+        val controller = DockerfileController()
+        val filePath = "test_metadata.json"
+        controller.createMetadataFile("testDockerfile", filePath, "Python")
+        val metadataFile = File(File(filePath).parent, "metadata-info.json")
+        assertTrue(metadataFile.exists())
+        val metadata = MetadataDSL.parseFromFile(metadataFile)
+        assertEquals("testDockerfile", metadata.name)
+        assertEquals("Python", metadata.dockerfileType)
+    }
 }

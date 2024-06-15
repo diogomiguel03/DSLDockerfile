@@ -3,10 +3,7 @@ package org.example.Controllers
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import javafx.beans.property.SimpleStringProperty
 import org.example.Config
-import org.example.DSL.DockerImageDSL
-import org.example.DSL.Metadata
-import org.example.DSL.MetadataDSL
-import org.example.DSL.dockerImage
+import org.example.DSL.*
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
@@ -101,7 +98,14 @@ class DockerImageController {
                 MetadataDSL.saveToFile(metadataFile.absolutePath, updatedMetadata)
                 outputLog.set("Metadata file updated: ${metadataFile.absolutePath}")
             } else {
-                outputLog.set("Metadata file does not exist: ${metadataFile.absolutePath}")
+                val newMetadata = metadata {
+                    name = File(dockerfilePath).nameWithoutExtension
+                    timestamp = java.time.Instant.now().toString()
+                    this.dockerfilePath = dockerfilePath
+                    imageName(imageName)
+                }
+                MetadataDSL.saveToFile(metadataFile.absolutePath, newMetadata)
+                outputLog.set("New metadata file created: ${metadataFile.absolutePath}")
             }
         } catch (e: Exception) {
             outputLog.set("Failed to update metadata file: ${e.message}")
