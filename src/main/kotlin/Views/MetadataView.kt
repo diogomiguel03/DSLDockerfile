@@ -1,4 +1,3 @@
-// File: MetadataView.kt
 package org.example.Views
 
 import javafx.scene.control.Alert
@@ -7,7 +6,6 @@ import javafx.stage.DirectoryChooser
 import org.example.Controllers.MetadataController
 import org.example.MainMenu
 import tornadofx.*
-import java.io.File
 
 class MetadataView : View("Metadata Viewer") {
     private val controller = MetadataController()
@@ -18,14 +16,19 @@ class MetadataView : View("Metadata Viewer") {
 
         button("Select Directory") {
             action {
-                val directoryChooser = DirectoryChooser()
-                directoryChooser.title = "Select Directory"
-                val selectedDir = directoryChooser.showDialog(null)
-                if (selectedDir != null) {
-                    controller.selectedDirectory.set(selectedDir.absolutePath)
-                    controller.findAndDisplayMetadataFiles(selectedDir)
-                } else {
-                    alert(Alert.AlertType.WARNING, "Warning", "No directory selected.")
+                try {
+                    val directoryChooser = DirectoryChooser()
+                    directoryChooser.title = "Select Directory"
+                    val selectedDir = directoryChooser.showDialog(currentWindow)
+                    if (selectedDir != null) {
+                        controller.selectedDirectory.set(selectedDir.absolutePath)
+                        controller.findAndDisplayMetadataFiles(selectedDir)
+                    } else {
+                        alert(Alert.AlertType.WARNING, "Warning", "No directory selected.")
+                    }
+                } catch (e: Exception) {
+                    alert(Alert.AlertType.ERROR, "Error", "An error occurred while selecting the directory: ${e.message}")
+                    e.printStackTrace()
                 }
             }
         }

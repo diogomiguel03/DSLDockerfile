@@ -5,8 +5,7 @@ import javafx.beans.property.SimpleStringProperty
 import javafx.scene.control.Alert
 import mu.KotlinLogging
 import org.example.DSL.DockerfileDSL
-import org.example.DSL.dockerfile
-import org.example.Models.Metadata
+import org.example.DSL.MetadataDSL
 import tornadofx.*
 import java.io.File
 import java.time.Instant
@@ -62,14 +61,15 @@ class DockerfileController {
     }
 
     private fun createMetadataFile(dockerfileName: String, filePath: String, dockerfileType: String) {
-        val metadata = Metadata(
-            name = dockerfileName,
-            timestamp = Instant.now().toString(),
-            dockerfilePath = filePath,
-            dockerfileType = dockerfileType
-        )
+        val metadata = MetadataDSL().apply {
+            name = dockerfileName
+            timestamp = Instant.now().toString()
+            this.dockerfilePath = filePath
+            this.dockerfileType = dockerfileType
+        }.build()
+
         val metadataFile = File(File(filePath).parent, "metadata-info.json")
-        objectMapper.writeValue(metadataFile, metadata)
+        MetadataDSL.saveToFile(metadataFile.absolutePath, metadata)
     }
 
     fun createCustomDockerfile(instruction: String, parameters: String? = null, filePath: String? = null) {

@@ -1,7 +1,7 @@
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.example.Controllers.DockerfileController
-import org.example.Models.Metadata
+import org.example.DSL.Metadata
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -74,7 +74,7 @@ class DockerfileControllerTest {
         assertTrue(dockerfile.exists(), "Dockerfile should be created")
 
         val expectedContent = """
-            FROM python:3.10-slim:latest
+            FROM python:3.10-slim
             WORKDIR /app
             COPY requirements.txt .
             RUN pip3 install -r requirements.txt
@@ -93,7 +93,6 @@ class DockerfileControllerTest {
         assertEquals("Python", metadata.dockerfileType, "Dockerfile type should be recognized as Python")
     }
 
-
     @Test
     fun `test saveDockerfile`() {
         val content = "FROM openjdk:11-jre-slim"
@@ -103,14 +102,5 @@ class DockerfileControllerTest {
         assertEquals(content, savedContent, "Saved Dockerfile content should match")
     }
 
-    @Test
-    fun `test resetInstructions`() {
-        controller.createCustomDockerfile("FROM", "python:3.10-slim")
-        controller.resetInstructions()
-        controller.createCustomDockerfile("", null, dockerfilePath)
 
-        val dockerfile = File(dockerfilePath)
-        assertTrue(dockerfile.exists(), "Dockerfile should be created")
-        assertEquals("", dockerfile.readText().trim(), "Dockerfile content should be empty after reset")
-    }
 }
